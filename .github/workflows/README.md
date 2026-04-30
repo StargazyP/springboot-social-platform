@@ -5,14 +5,19 @@
 이 워크플로우를 사용하려면 다음 Secrets를 GitHub 저장소에 설정해야 합니다:
 
 ### 1. Docker Hub 인증 정보
-- `DOCKER_USERNAME`: Docker Hub 사용자명
-- `DOCKER_PASSWORD`: Docker Hub 비밀번호 또는 Access Token
+- 아래 둘 중 **한 세트만** 설정하면 됩니다(워크플로우가 둘 다 지원).
+  - **권장(기존 워크플로우 표기)**: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
+  - **대체(일반 표기)**: `DOCKER_USERNAME`, `DOCKER_PASSWORD`
 
 ### 2. SSH 배포 정보 (선택사항)
 - `SSH_HOST`: 배포 서버 호스트 주소 (예: `jangdonggun.iptime.org`)
 - `SSH_USERNAME`: SSH 사용자명 (예: `ubuntu` 또는 `jangdonggun`)
 - `SSH_PRIVATE_KEY`: SSH 개인 키
-- `SSH_PORT`: SSH 포트 (기본값: 22)
+- `SSH_PORT`: SSH 포트 (선택, 기본값: 22)
+
+### 3. Webhook 보안 시크릿 (권장)
+- `WEBHOOK_SECRET`: 서버의 `WEBHOOK_SECRET`과 동일한 값
+  - 설정하면 GitHub Actions가 `X-Hub-Signature-256`(HMAC-SHA256) 서명 헤더를 붙여 호출합니다.
 
 ## Secrets 설정 방법
 

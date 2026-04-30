@@ -5,8 +5,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = 3000;
-// 환경 변수에서 시크릿 가져오기 (없으면 기본값 사용)
-const SECRET = process.env.WEBHOOK_SECRET || 'your_webhook_secret_here';
+const SECRET = process.env.WEBHOOK_SECRET;
 
 // 로깅 미들웨어
 app.use((req, res, next) => {
@@ -16,22 +15,13 @@ app.use((req, res, next) => {
 
 app.use(express.json({
   verify: (req, res, buf) => {
-    // 시크릿이 설정되지 않았으면 검증 건너뛰기
-    if (SECRET === 'your_webhook_secret_here') {
-      console.log('Webhook secret이 설정되지 않았습니다. 검증을 건너뜁니다.');
-      return;
-    }
-    
     const signature = req.headers['x-hub-signature-256'];
-    if (signature) {
-      const hmac = crypto.createHmac('sha256', SECRET);
-      const digest = 'sha256=' + hmac.update(buf).digest('hex');
-      if (signature !== digest) {
-        console.error('Invalid signature');
-        throw new Error('Invalid signature');
-      }
-      console.log('Signature verified');
-    }
+    if (!SECRET) throw new Error('WEBHOOK_SECRET is not configured on server');
+    if (!signature) throw new Error('Missing X-Hub-Signature-256 header');
+
+    const hmac = crypto.createHmac('sha256', SECRET);
+    const digest = 'sha256=' + hmac.update(buf).digest('hex');
+    if (signature !== digest) throw new Error('Invalid signature');
   }
 }));
 
@@ -63,7 +53,7 @@ app.post('/webhook', (req, res) => {
       }
     ];
     
-    let deployCommand = '';
+    let deployCommand = 'set -euo pipefail\n';
     for (const paths of possiblePaths) {
       deployCommand += `
         if [ -d "${paths.gitPath}" ] && [ -d "${paths.composePath}" ]; then
@@ -71,27 +61,16 @@ app.post('/webhook', (req, res) => {
           echo "📂 Docker Compose 디렉토리: ${paths.composePath}" &&
           cd "${paths.gitPath}" &&
           echo "📥 최신 코드 가져오기..." &&
-          git fetch origin &&
-          # 안전한 병합: 로컬 변경사항 보존
-          git stash || true &&
-          git merge origin/main || {
-            echo "병합 충돌 발생, rebase 시도..." &&
-            git merge --abort 2>/dev/null || true &&
-            git rebase origin/main || {
-              echo "병합 실패, 현재 상태 유지" &&
-              git rebase --abort 2>/dev/null || true &&
-              exit 1
-            }
-          } &&
-          # stash한 변경사항 복원 (이미지 파일 등)
-          git stash pop || true &&
+          git fetch origin main &&
+          echo "🧹 배포 전 작업트리 정리..." &&
+          git reset --hard origin/main &&
+          git clean -fd &&
           echo "🐳 원격 Docker 이미지 업데이트..." &&
           cd "${paths.composePath}" &&
           # docker-compose.prod.yml 사용하여 원격 이미지 pull 및 실행
-          docker compose -f docker-compose.prod.yml pull app 2>/dev/null || docker-compose -f docker-compose.prod.yml pull app 2>/dev/null || echo "⚠️ docker compose pull 실패" &&
-          docker compose -f docker-compose.prod.yml down 2>/dev/null || docker-compose -f docker-compose.prod.yml down 2>/dev/null || true &&
-          docker compose -f docker-compose.prod.yml up -d 2>/dev/null || docker-compose -f docker-compose.prod.yml up -d 2>/dev/null &&
-          docker compose -f docker-compose.prod.yml ps 2>/dev/null || docker-compose -f docker-compose.prod.yml ps 2>/dev/null &&
+          (docker compose -f docker-compose.prod.yml pull app || docker-compose -f docker-compose.prod.yml pull app) &&
+          (docker compose -f docker-compose.prod.yml up -d || docker-compose -f docker-compose.prod.yml up -d) &&
+          (docker compose -f docker-compose.prod.yml ps || docker-compose -f docker-compose.prod.yml ps) &&
           echo "✅ 원격 이미지 배포 완료!" &&
           exit 0
         fi
@@ -99,11 +78,11 @@ app.post('/webhook', (req, res) => {
     }
     deployCommand += 'echo "프로젝트 디렉토리를 찾을 수 없습니다" && exit 1';
     
-    exec(deployCommand, { maxBuffer: 1024 * 1024 * 10 }, (err, stdout, stderr) => {
+    exec(deployCommand, { shell: '/bin/bash', maxBuffer: 1024 * 1024 * 10 }, (err, stdout, stderr) => {
       if (err) {
         console.error('배포 오류:', err);
         console.error('stderr:', stderr);
-        res.status(500).json({ error: 'Deployment failed', message: err.message });
+        res.status(500).json({ error: 'Deployment failed', message: err.message, stderr, stdout });
       } else {
         console.log('배포 성공!');
         console.log('stdout:', stdout);
@@ -111,7 +90,8 @@ app.post('/webhook', (req, res) => {
         res.status(200).json({ 
           success: true, 
           message: 'Deployment completed',
-          output: stdout 
+          output: stdout,
+          stderr
         });
       }
     });
@@ -119,6 +99,20 @@ app.post('/webhook', (req, res) => {
     console.log(`ℹEvent ${event}는 처리하지 않습니다.`);
     res.status(200).json({ message: `Event ${event} received but not processed` });
   }
+});
+
+// Error handler (signature verification, etc.)
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  const message = err?.message || 'Unknown error';
+  const status =
+    message.includes('Missing X-Hub-Signature-256') ? 403 :
+    message.includes('Invalid signature') ? 403 :
+    message.includes('WEBHOOK_SECRET is not configured') ? 500 :
+    500;
+
+  console.error('Request failed:', message);
+  res.status(status).json({ success: false, error: message });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
