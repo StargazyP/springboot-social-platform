@@ -1,68 +1,81 @@
+version: "3.8"
+
 services:
   app:
-    image: stargazyp2/spring-sns:${DOCKER_IMAGE_TAG:-latest}   # main→latest, develop 등은 해당 브랜치 태그
+    image: stargazyp2/spring-sns:${DOCKER_IMAGE_TAG:-latest}
     container_name: spring-sns-app
     restart: unless-stopped
+
     ports:
       - "8080:8080"
+
+    env_file:
+      - .env
+
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/member?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=!Blackser7789
-      # 업로드 디렉토리 경로 (Docker 환경)
-      - UPLOAD_BASE_DIR=/app/uploads
-      - UPLOAD_POSTS_DIR=/app/uploads/posts
-      - UPLOAD_PROFILE_DIR=/app/uploads/static
-      - UPLOAD_MESSAGES_DIR=/app/uploads/static
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/member?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+
+      # 업로드 경로
+      UPLOAD_BASE_DIR: /app/uploads
+      UPLOAD_POSTS_DIR: /app/uploads/posts
+      UPLOAD_PROFILE_DIR: /app/uploads/static
+      UPLOAD_MESSAGES_DIR: /app/uploads/static
+
     volumes:
-      # 업로드된 이미지 파일 영구 저장 (호스트와 공유)
       - ./uploads:/app/uploads
-      # static 리소스도 마운트 (기존 파일 유지)
-      - ./src/main/resources/static:/app/src/main/resources/static:ro
+
     depends_on:
       mysql:
         condition: service_healthy
+
     networks:
       - spring_sns_network
+
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
 
-  # MySQL 데이터베이스
   mysql:
     image: mysql:8.0
     container_name: spring-sns-mysql
     restart: unless-stopped
-    ports:
-      - "3306:3306"
+
+    # ❗ 운영에서는 외부 포트 제거
+    # ports:
+    #   - "3306:3306"
+
+    env_file:
+      - .env
+
     environment:
-      MYSQL_ROOT_PASSWORD: "!Blackser7789"
       MYSQL_DATABASE: member
-      MYSQL_USER: user
-      MYSQL_PASSWORD: "!Blackser7789"
       TZ: Asia/Seoul
+
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
     networks:
       - spring_sns_network
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"!Blackser7789\""]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+
 
 networks:
   spring_sns_network:
     driver: bridge
 
+
 volumes:
   mysql_data:
-    driver: local
-
