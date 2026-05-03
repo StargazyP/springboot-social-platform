@@ -127,13 +127,13 @@ jobs:
         run: |
           echo "Webhook을 통한 즉각 배포 시도... (브랜치 ${{ github.ref }})"
           payload="{\"ref\":\"${{ github.ref }}\",\"head_commit\":{\"id\":\"${{ github.sha }}\"},\"repository\":{\"full_name\":\"${{ github.repository }}\"}}"
-          if [ -n "${WEBHOOK_SECRET}" ]; then
-            signature="sha256=$(printf '%s' "${payload}" | openssl dgst -sha256 -hmac "${WEBHOOK_SECRET}" -hex | awk '{print $2}')"
-            sig_header_value="X-Hub-Signature-256: ${signature}"
-          else
-            echo "⚠️ WEBHOOK_SECRET이 설정되지 않았습니다. (권장) Secrets에 WEBHOOK_SECRET을 추가하세요."
-            sig_header_value=""
+          if [ -z "${WEBHOOK_SECRET}" ]; then
+            echo "❌ WEBHOOK_SECRET이 설정되지 않았습니다. Repository secrets에 WEBHOOK_SECRET을 추가해야 Webhook 배포가 가능합니다."
+            exit 1
           fi
+
+          signature="sha256=$(printf '%s' "${payload}" | openssl dgst -sha256 -hmac "${WEBHOOK_SECRET}" -hex | awk '{print $2}')"
+          sig_header_value="X-Hub-Signature-256: ${signature}"
 
           curl -X POST "http://${{ secrets.SSH_HOST }}:3000/webhook" \
             -H "Content-Type: application/json" \
@@ -152,7 +152,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           # appleboy/ssh-action 기본 포트는 22입니다. secrets.SSH_PORT가 없으면 생략됩니다.
-          port: ${{ secrets.SSH_PORT }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             BRANCH='${{ github.ref_name }}'
             export DOCKER_IMAGE_TAG=$( [ "${BRANCH}" = "main" ] && echo latest || echo "$(printf '%s' "${BRANCH}" | tr '/' '-')" )
