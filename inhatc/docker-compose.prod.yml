@@ -1,6 +1,6 @@
 services:
   app:
-    image: stargazyp2/spring-sns:latest   # 원격 이미지 사용 (GitHub Actions로 빌드된 이미지)
+    image: stargazyp2/spring-sns:${DOCKER_IMAGE_TAG:-latest}   # main→latest, develop 등은 해당 브랜치 태그
     container_name: spring-sns-app
     restart: unless-stopped
     ports:

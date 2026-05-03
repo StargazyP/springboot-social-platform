@@ -115,7 +115,7 @@ jobs:
     name: Deploy to Server
     runs-on: ubuntu-latest
     needs: build-docker-image
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     
     steps:
       - name: Checkout code
@@ -125,8 +125,8 @@ jobs:
         env:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
-          echo "Webhook을 통한 즉각 배포 시도..."
-          payload='{"ref":"refs/heads/main","head_commit":{"id":"${{ github.sha }}"},"repository":{"name":"${{ github.repository }}"}}'
+          echo "Webhook을 통한 즉각 배포 시도... (브랜치 ${{ github.ref }})"
+          payload="{\"ref\":\"${{ github.ref }}\",\"head_commit\":{\"id\":\"${{ github.sha }}\"},\"repository\":{\"full_name\":\"${{ github.repository }}\"}}"
           if [ -n "${WEBHOOK_SECRET}" ]; then
             signature="sha256=$(printf '%s' "${payload}" | openssl dgst -sha256 -hmac "${WEBHOOK_SECRET}" -hex | awk '{print $2}')"
             sig_header_value="X-Hub-Signature-256: ${signature}"
@@ -154,9 +154,11 @@ jobs:
           # appleboy/ssh-action 기본 포트는 22입니다. secrets.SSH_PORT가 없으면 생략됩니다.
           port: ${{ secrets.SSH_PORT }}
           script: |
+            BRANCH='${{ github.ref_name }}'
+            export DOCKER_IMAGE_TAG=$( [ "${BRANCH}" = "main" ] && echo latest || echo "$(printf '%s' "${BRANCH}" | tr '/' '-')" )
             cd /home/${{ secrets.SSH_USERNAME }}/포트폴리오/Spring_sns || cd /home/${{ secrets.SSH_USERNAME }}/spring_sns_git/inhatc
-            docker compose pull app || echo "이미지가 없거나 로컬 빌드 사용!"
-            docker compose up -d --build
-            docker compose ps
-            docker compose logs --tail=50 app
+            docker compose -f docker-compose.prod.yml pull app || echo "이미지가 없거나 로컬 빌드 사용!"
+            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml logs --tail=50 app
 

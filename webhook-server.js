@@ -30,12 +30,36 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+function dockerBranchTag(branchName) {
+  if (branchName === 'main') return 'latest';
+  return branchName.replace(/\//g, '-');
+}
+
+function assertSafeBranch(branch) {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._/-]+$/.test(branch) || branch.includes('..'))
+    throw new Error('Invalid branch');
+}
+
 app.post('/webhook', (req, res) => {
   const event = req.headers['x-github-event'];
   console.log(`Webhook event received: ${event}`);
   
   if (event === 'push') {
-    console.log('Push event received, updating Spring Boot container...');
+    const refRaw = typeof req.body?.ref === 'string' ? req.body.ref : '';
+    const branch =
+      /^refs\/heads\/(.+)/.exec(refRaw)?.[1]?.replace(/^\/+|\/+$/g, '') || 'main';
+
+    try {
+      assertSafeBranch(branch);
+    } catch (e) {
+      return res.status(400).json({ success: false, error: String(e.message) });
+    }
+
+    const imageTag = dockerBranchTag(branch);
+    console.log(`Push branch=${branch}, DOCKER_IMAGE_TAG=${imageTag}, updating containers...`);
+
+    const branchSh = branch.replace(/'/g, "'\\''");
+    const imageTagSh = imageTag.replace(/'/g, "'\\''");
     
     // 여러 가능한 디렉토리 경로 시도 (Git 저장소 경로와 Docker Compose 경로)
     const possiblePaths = [
@@ -54,20 +78,20 @@ app.post('/webhook', (req, res) => {
     ];
     
     let deployCommand = 'set -euo pipefail\n';
+    deployCommand += `BRANCH_NAME='${branchSh}'\nexport DOCKER_IMAGE_TAG='${imageTagSh}'\n`;
     for (const paths of possiblePaths) {
       deployCommand += `
         if [ -d "${paths.gitPath}" ] && [ -d "${paths.composePath}" ]; then
           echo "📂 Git 저장소: ${paths.gitPath}" &&
           echo "📂 Docker Compose 디렉토리: ${paths.composePath}" &&
           cd "${paths.gitPath}" &&
-          echo "📥 최신 코드 가져오기..." &&
-          git fetch origin main &&
+          echo "📥 브랜치 \${BRANCH_NAME} 최신 코드 가져오기..." &&
+          git fetch origin "\${BRANCH_NAME}" &&
           echo "🧹 배포 전 작업트리 정리..." &&
-          git reset --hard origin/main &&
+          git reset --hard "origin/\${BRANCH_NAME}" &&
           git clean -fd &&
-          echo "🐳 원격 Docker 이미지 업데이트..." &&
+          echo "🐳 원격 이미지 (DOCKER_IMAGE_TAG=\${DOCKER_IMAGE_TAG}) pull..." &&
           cd "${paths.composePath}" &&
-          # docker-compose.prod.yml 사용하여 원격 이미지 pull 및 실행
           (docker compose -f docker-compose.prod.yml pull app || docker-compose -f docker-compose.prod.yml pull app) &&
           (docker compose -f docker-compose.prod.yml up -d || docker-compose -f docker-compose.prod.yml up -d) &&
           (docker compose -f docker-compose.prod.yml ps || docker-compose -f docker-compose.prod.yml ps) &&

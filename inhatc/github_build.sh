@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# GitHub에 변경사항 커밋 및 푸시 스크립트
+# GitHub에 변경사항 커밋 및 푸시 스크립트 (현재 브랜치 기준으로 push)
 # 사용법: ./github_build.sh [커밋 메시지]
 # 예시: ./github_build.sh "댓글 기능 개선"
 
@@ -62,7 +62,7 @@ echo "[OK] 커밋 완료"
 
 # Git push
 echo "3. Git push 실행 중..."
-git push origin main
+git push origin "$CURRENT_BRANCH"
 echo "[OK] 푸시 완료"
 
 echo "=========================================="
