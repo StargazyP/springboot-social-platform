@@ -126,7 +126,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
           echo "Webhook을 통한 즉각 배포 시도... (브랜치 ${{ github.ref }})"
-          payload="{\"ref\":\"${{ github.ref }}\",\"head_commit\":{\"id\":\"${{ github.sha }}\"},\"repository\":{\"full_name\":\"${{ github.repository }}\"}}"
+          payload="{\"ref\":\"${{ github.ref }}\",\"head_commit\":{\"id\":\"${{ github.sha }}\"},\"repository\":{\"full_name\":\"${{ github.repository }}\",\"name\":\"${{ github.event.repository.name }}\"}}"
           if [ -z "${WEBHOOK_SECRET}" ]; then
             echo "❌ WEBHOOK_SECRET이 설정되지 않았습니다. Repository secrets에 WEBHOOK_SECRET을 추가해야 Webhook 배포가 가능합니다."
             exit 1
@@ -156,7 +156,15 @@ jobs:
           script: |
             BRANCH='${{ github.ref_name }}'
             export DOCKER_IMAGE_TAG=$( [ "${BRANCH}" = "main" ] && echo latest || echo "$(printf '%s' "${BRANCH}" | tr '/' '-')" )
-            cd /home/${{ secrets.SSH_USERNAME }}/포트폴리오/Spring_sns || cd /home/${{ secrets.SSH_USERNAME }}/spring_sns_git/inhatc
+            set -e
+            if [ -d "$HOME/포트폴리오/spring_sns_git/inhatc" ] && [ -f "$HOME/포트폴리오/spring_sns_git/inhatc/docker-compose.prod.yml" ]; then
+              cd "$HOME/포트폴리오/spring_sns_git/inhatc"
+            elif [ -d "$HOME/spring_sns_git/inhatc" ] && [ -f "$HOME/spring_sns_git/inhatc/docker-compose.prod.yml" ]; then
+              cd "$HOME/spring_sns_git/inhatc"
+            else
+              echo "docker-compose.prod.yml 을 찾을 수 없습니다. \$HOME/포트폴리오/spring_sns_git/inhatc 또는 \$HOME/spring_sns_git/inhatc 를 확인하세요."
+              exit 1
+            fi
             docker compose -f docker-compose.prod.yml pull app || echo "이미지가 없거나 로컬 빌드 사용!"
             docker compose -f docker-compose.prod.yml up -d
             docker compose -f docker-compose.prod.yml ps
