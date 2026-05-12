@@ -203,7 +203,7 @@
           <span>User</span>
         </a>
         <a href="/chat/message" class="sidebar-item">
-          <img src="/Message.png" alt="Message" />
+          <img src="/images/message.svg" alt="Message" />
           <span>Message</span>
         </a>
         <div class="sidebar-item notification-icon-container active" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
@@ -249,7 +249,7 @@
         }
         
         currentUserEmail = email;
-        const socket = new SockJS('/ws');
+        const socket = new SockJS('/sns/ws');
         stompClient = Stomp.over(socket);
         
         stompClient.connect({}, function(frame) {

@@ -454,7 +454,7 @@
           <span>User</span>
         </a>
         <a href="/chat/message" class="sidebar-item">
-          <img src="/Message.png" alt="Message" />
+          <img src="/images/message.svg" alt="Message" />
           <span>Message</span>
         </a>
         <div class="sidebar-item notification-icon-container" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
@@ -532,7 +532,7 @@
             <a 
               th:href="@{/chat/message(receiverEmail=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail})}"
               style="background-color: #1d9bf0; color: #ffffff; border: none; border-radius: 24px; padding: 10px 24px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-              <img src="/Message.png" alt="Message" style="width: 20px; height: 20px; object-fit: contain;">
+              <img src="/images/message.svg" alt="Message" style="width: 20px; height: 20px; object-fit: contain;">
               메시지
             </a>
           </div>
