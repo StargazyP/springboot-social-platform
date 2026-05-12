@@ -135,13 +135,14 @@ jobs:
           signature="sha256=$(printf '%s' "${payload}" | openssl dgst -sha256 -hmac "${WEBHOOK_SECRET}" -hex | awk '{print $2}')"
           sig_header_value="X-Hub-Signature-256: ${signature}"
 
+          # 웹훅은 202로 즉시 응답(배포는 서버에서 비동기). 연결만 느릴 때를 대비해 여유 있게 둠.
           curl -X POST "http://${{ secrets.SSH_HOST }}:3000/webhook" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
             ${sig_header_value:+-H "${sig_header_value}"} \
             -d "${payload}" \
-            --max-time 30 \
-            --connect-timeout 10 \
+            --max-time 60 \
+            --connect-timeout 15 \
             -f || (echo "⚠️ Webhook 호출 실패, SSH 배포로 대체합니다" && exit 1)
 
       - name: Deploy to server via SSH (Fallback)
@@ -155,18 +156,25 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             BRANCH='${{ github.ref_name }}'
-            export DOCKER_IMAGE_TAG=$( [ "${BRANCH}" = "main" ] && echo latest || echo "$(printf '%s' "${BRANCH}" | tr '/' '-')" )
             set -e
-            if [ -d "$HOME/포트폴리오/spring_sns_git/inhatc" ] && [ -f "$HOME/포트폴리오/spring_sns_git/inhatc/docker-compose.prod.yml" ]; then
-              cd "$HOME/포트폴리오/spring_sns_git/inhatc"
-            elif [ -d "$HOME/spring_sns_git/inhatc" ] && [ -f "$HOME/spring_sns_git/inhatc/docker-compose.prod.yml" ]; then
-              cd "$HOME/spring_sns_git/inhatc"
-            else
-              echo "docker-compose.prod.yml 을 찾을 수 없습니다. \$HOME/포트폴리오/spring_sns_git/inhatc 또는 \$HOME/spring_sns_git/inhatc 를 확인하세요."
-              exit 1
-            fi
-            docker compose -f docker-compose.prod.yml pull app || echo "이미지가 없거나 로컬 빌드 사용!"
-            docker compose -f docker-compose.prod.yml up -d
-            docker compose -f docker-compose.prod.yml ps
-            docker compose -f docker-compose.prod.yml logs --tail=50 app
+            REPO=""
+            for d in "$HOME/포트폴리오/spring_sns_git" "$HOME/spring_sns_git"; do
+              if [ -d "$d/.git" ]; then REPO="$d"; break; fi
+            done
+            PORTFOLIO=""
+            for d in "$HOME/포트폴리오/portfolio" "$HOME/portfolio"; do
+              if [ -f "$d/docker-compose.yml" ]; then PORTFOLIO="$d"; break; fi
+            done
+            if [ -z "$REPO" ]; then echo "spring_sns_git 저장소(.git)를 찾을 수 없습니다."; exit 1; fi
+            if [ -z "$PORTFOLIO" ]; then echo "portfolio/docker-compose.yml 을 찾을 수 없습니다."; exit 1; fi
+            echo "==> SSH fallback: git pull ($REPO) + portfolio spring ($PORTFOLIO)"
+            cd "$REPO"
+            git fetch origin "$BRANCH"
+            git checkout "$BRANCH"
+            git pull --ff-only origin "$BRANCH"
+            cd "$PORTFOLIO"
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" build spring
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" up -d spring
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" ps spring
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" logs --tail=80 spring
 
