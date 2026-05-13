@@ -87,9 +87,14 @@ public class PostController {
      * 게시글 삭제
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePost(@PathVariable Long id) {
-        postService.delete(id);
-        return ResponseEntity.ok("게시글이 삭제되었습니다.");
+    public ResponseEntity<Void> deletePost(@PathVariable Long id, HttpSession session) {
+        String email = (String) session.getAttribute("loginEmail");
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        // REST 개선: DELETE는 소유권 확인 후 본문 없이 204로 응답한다.
+        postService.delete(id, email);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -121,7 +126,8 @@ public class PostController {
     /**
      * 게시글 업로드
      */
-    @PostMapping("/upload")
+    // REST 개선: 게시글 생성은 컬렉션 리소스(POST /api/posts)로 받는다.
+    @PostMapping({"", "/upload"})
     public ResponseEntity<String> uploadImage(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam("content") @NotBlank(message = "게시글 내용은 필수입니다.") 
@@ -143,7 +149,8 @@ public class PostController {
 
             log.info(kr.co.inhatc.inhatc.constants.AppConstants.LogMessage.POST_UPLOAD_SUCCESS + ": 사용자={}, 파일={}", 
                     email, file != null ? file.getOriginalFilename() : "없음");
-            return ResponseEntity.ok(kr.co.inhatc.inhatc.constants.AppConstants.SuccessMessage.POST_UPLOAD_SUCCESS);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(kr.co.inhatc.inhatc.constants.AppConstants.SuccessMessage.POST_UPLOAD_SUCCESS);
         } catch (IllegalArgumentException e) {
             log.warn(kr.co.inhatc.inhatc.constants.AppConstants.LogMessage.POST_UPLOAD_FAILED, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

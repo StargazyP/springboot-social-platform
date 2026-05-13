@@ -88,7 +88,7 @@ public class MemberController {
             session.invalidate(); // 세션 종료
             log.info("로그아웃: 세션 무효화 완료");
         }
-        return "redirect:/"; // login.html로 이동
+        return "redirect:/login";
     }
 
     /**
@@ -117,7 +117,8 @@ public class MemberController {
     /**
      * 프로필 사진 업로드
      */
-    @PostMapping("/{email}/upload-profile")
+    // REST 개선: 프로필 이미지를 멤버의 하위 리소스로 표현한다.
+    @PostMapping({"/{email}/profile-image", "/{email}/upload-profile"})
     public ResponseEntity<String> uploadProfile(
             @PathVariable @NotBlank(message = "이메일은 필수입니다.") @Email(message = "올바른 이메일 형식이 아닙니다.") String email,
             @RequestParam("file") MultipartFile file) {

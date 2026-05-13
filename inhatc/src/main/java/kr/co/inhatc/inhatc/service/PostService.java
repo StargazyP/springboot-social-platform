@@ -254,8 +254,17 @@ public class PostService {
 
     @Transactional
     public void delete(Long postId) {
+        delete(postId, null);
+    }
+
+    @Transactional
+    public void delete(Long postId, String requesterEmail) {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POSTS_NOT_FOUND));
+
+        if (requesterEmail != null && !requesterEmail.equals(post.getMemberEmail())) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
 
         // 실제 DB에서 삭제
         // postRepository.delete(post);

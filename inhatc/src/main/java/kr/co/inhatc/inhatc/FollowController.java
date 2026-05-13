@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
-@RequestMapping("/api/follow")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 public class FollowController {
@@ -28,7 +29,8 @@ public class FollowController {
     /**
      * 팔로우하기
      */
-    @PostMapping("/{followingEmail}")
+    // REST 개선: 팔로우 관계를 현재 사용자의 following 하위 리소스로 표현한다.
+    @PostMapping({"/members/me/following/{followingEmail}", "/follow/{followingEmail}"})
     public ResponseEntity<String> follow(
             @PathVariable String followingEmail,
             HttpSession session) {
@@ -54,7 +56,15 @@ public class FollowController {
     /**
      * 언팔로우하기
      */
-    @PostMapping("/{followingEmail}/unfollow")
+    @DeleteMapping("/members/me/following/{followingEmail}")
+    public ResponseEntity<Void> deleteFollowing(
+            @PathVariable String followingEmail,
+            HttpSession session) {
+        ResponseEntity<String> result = unfollow(followingEmail, session);
+        return ResponseEntity.status(result.getStatusCode()).build();
+    }
+
+    @PostMapping("/follow/{followingEmail}/unfollow")
     public ResponseEntity<String> unfollow(
             @PathVariable String followingEmail,
             HttpSession session) {
@@ -77,7 +87,7 @@ public class FollowController {
     /**
      * 팔로우 여부 확인
      */
-    @GetMapping("/{followingEmail}/status")
+    @GetMapping({"/members/me/following/{followingEmail}/status", "/follow/{followingEmail}/status"})
     public ResponseEntity<Boolean> isFollowing(
             @PathVariable String followingEmail,
             HttpSession session) {
@@ -94,7 +104,7 @@ public class FollowController {
     /**
      * 팔로워 목록 조회
      */
-    @GetMapping("/{memberEmail}/followers")
+    @GetMapping({"/members/{memberEmail}/followers", "/follow/{memberEmail}/followers"})
     public ResponseEntity<List<FollowDTO>> getFollowers(
             @PathVariable String memberEmail,
             HttpSession session) {
@@ -111,7 +121,7 @@ public class FollowController {
     /**
      * 팔로잉 목록 조회
      */
-    @GetMapping("/{memberEmail}/following")
+    @GetMapping({"/members/{memberEmail}/following", "/follow/{memberEmail}/following"})
     public ResponseEntity<List<FollowDTO>> getFollowing(
             @PathVariable String memberEmail,
             HttpSession session) {
@@ -128,7 +138,7 @@ public class FollowController {
     /**
      * 팔로우 통계 조회
      */
-    @GetMapping("/{memberEmail}/stats")
+    @GetMapping({"/members/{memberEmail}/follow-stats", "/follow/{memberEmail}/stats"})
     public ResponseEntity<FollowStatsDTO> getFollowStats(
             @PathVariable String memberEmail,
             HttpSession session) {

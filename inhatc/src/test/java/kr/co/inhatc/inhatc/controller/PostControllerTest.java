@@ -101,11 +101,11 @@ class PostControllerTest {
         doNothing().when(postService).savePost(anyString(), anyString(), anyString());
 
         // when & then
-        mockMvc.perform(multipart("/api/posts/upload")
+        mockMvc.perform(multipart("/api/posts")
                 .file("file", "test image content".getBytes())
                 .param("content", "테스트 게시글 내용")
                 .session(session))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         verify(postService, times(1)).imgupload(any(), eq("test@example.com"));
         verify(postService, times(1)).savePost(anyString(), anyString(), anyString());
@@ -118,7 +118,7 @@ class PostControllerTest {
         MockHttpSession emptySession = new MockHttpSession();
 
         // when & then
-        mockMvc.perform(multipart("/api/posts/upload")
+        mockMvc.perform(multipart("/api/posts")
                 .file("file", "test image content".getBytes())
                 .param("content", "테스트 게시글 내용")
                 .session(emptySession))
@@ -132,14 +132,13 @@ class PostControllerTest {
     void deletePost_Success() throws Exception {
         // given
         Long postId = 1L;
-        doNothing().when(postService).delete(postId);
+        doNothing().when(postService).delete(eq(postId), eq("test@example.com"));
 
         // when & then
-        mockMvc.perform(delete("/api/posts/{id}", postId))
-                .andExpect(status().isOk())
-                .andExpect(content().string("게시글이 삭제되었습니다."));
+        mockMvc.perform(delete("/api/posts/{id}", postId).session(session))
+                .andExpect(status().isNoContent());
 
-        verify(postService, times(1)).delete(postId);
+        verify(postService, times(1)).delete(postId, "test@example.com");
     }
 }
 

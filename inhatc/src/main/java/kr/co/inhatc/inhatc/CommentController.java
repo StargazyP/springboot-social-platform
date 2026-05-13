@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,21 +65,31 @@ public class CommentController {
 
         // 로그인된 사용자 이메일을 세션에서 가져옴
         String loginEmail = (String) session.getAttribute("loginEmail");
+        if (loginEmail == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         // DTO에 세팅
         commentRequestDTO.setUser(loginEmail);
         commentRequestDTO.setArticle(postId);
 
         CommentResponseDTO savedComment = commentService.addComment(commentRequestDTO);
-        return ResponseEntity.ok(savedComment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
     }
 
+    // REST 개선: 수정/삭제 주체는 요청 본문이 아니라 세션 사용자로 검증한다.
     @PutMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<String> updateComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @Valid @RequestBody CommentRequestDTO requestDTO
+            @Valid @RequestBody CommentRequestDTO requestDTO,
+            HttpSession session
     ) {
+        String loginEmail = (String) session.getAttribute("loginEmail");
+        if (loginEmail == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+        requestDTO.setUser(loginEmail);
         commentService.updateComment(postId, commentId, requestDTO);
         return ResponseEntity.ok("댓글이 수정되었습니다.");
     }
@@ -90,10 +101,15 @@ public class CommentController {
     @DeleteMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<String> deleteComment(
             @PathVariable Long postId,
-            @PathVariable Long commentId
+            @PathVariable Long commentId,
+            HttpSession session
     ) {
-        commentService.deleteComment(postId, commentId);
-        return ResponseEntity.ok("댓글이 삭제되었습니다.");
+        String loginEmail = (String) session.getAttribute("loginEmail");
+        if (loginEmail == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+        commentService.deleteComment(postId, commentId, loginEmail);
+        return ResponseEntity.noContent().build();
     }
 
 }

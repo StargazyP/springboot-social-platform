@@ -1,9 +1,11 @@
 /* 왼쪽 사이드바 (타원형 스타일) */
 .sidebar {
-  position: fixed;
-  left: calc(50% - 300px - 5px);
-  top: 50%;
-  transform: translateY(-50%);
+  /* 레이아웃 개선: 메인 컨테이너 안에서 스크롤을 따라오도록 sticky 사용 */
+  position: sticky;
+  top: 24px;
+  float: left;
+  margin-left: -76px;
+  margin-right: 16px;
   width: 60px;
   height: auto;
   min-height: 300px;
@@ -23,13 +25,14 @@
 
 @media (max-width: 1200px) {
   .sidebar {
-    left: calc(50% - 300px - 5px);
+    margin-left: -72px;
   }
 }
 
 @media (max-width: 800px) {
   .sidebar {
-    left: 20px;
+    margin-left: 8px;
+    margin-right: 8px;
   }
 }
 
@@ -97,5 +100,6 @@
   background-color: #ffffff;
   position: relative;
   left: 0;
+  overflow: visible;
 }
 

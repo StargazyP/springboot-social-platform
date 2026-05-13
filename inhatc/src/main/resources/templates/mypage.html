@@ -443,34 +443,34 @@
 
   <body>
     <div class="wrapper">
-      <!-- 왼쪽 사이드바 (X.com 스타일) -->
-      <div class="sidebar">
-        <a href="/main" class="sidebar-item">
-          <img src="/images/home.png" alt="home" />
-          <span>Home</span>
-        </a>
-        <a href="/member/mypage" class="sidebar-item active">
-          <img src="/images/user.png" alt="User" />
-          <span>User</span>
-        </a>
-        <a href="/chat/message" class="sidebar-item">
-          <img src="/images/message.svg" alt="Message" />
-          <span>Message</span>
-        </a>
-        <div class="sidebar-item notification-icon-container" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-          <img src="/images/alram.png" alt="Alarm" id="notificationIcon" />
-          <span>Alarm</span>
-          <span id="notificationBadge" class="notification-badge">0</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-          <img src="/images/logout.png" alt="Logout" />
-          <span>Logout</span>
-        </div>
-        <form id="logout" action="/api/members/logout" method="post"></form>
-      </div>
-
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
+        <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
+        <div class="sidebar">
+          <a href="/main" class="sidebar-item">
+            <img src="/images/home.png" alt="home" />
+            <span>Home</span>
+          </a>
+          <a href="/member/mypage" class="sidebar-item active">
+            <img src="/images/user.png" alt="User" />
+            <span>User</span>
+          </a>
+          <a href="/chat/message" class="sidebar-item">
+            <img src="/images/message.svg" alt="Message" />
+            <span>Message</span>
+          </a>
+          <div class="sidebar-item notification-icon-container" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
+            <img src="/images/alram.png" alt="Alarm" id="notificationIcon" />
+            <span>Alarm</span>
+            <span id="notificationBadge" class="notification-badge">0</span>
+          </div>
+          <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
+            <img src="/images/logout.png" alt="Logout" />
+            <span>Logout</span>
+          </div>
+          <form id="logout" action="/api/members/logout" method="post"></form>
+        </div>
+
         <div class="container">
         <!-- 디버깅 정보 표시 (개발 중에만 표시) -->
         <!-- <div id="debugInfo" style="background-color: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc; font-size: 12px; display: none;">
@@ -638,8 +638,8 @@
       function deletePost(element) {
         const postId = element.getAttribute("data-post-id");
         if (confirm("게시물을 삭제하시겠습니까?")) {
-          fetch(`/member/delete?id=${encodeURIComponent(postId)}`, {
-            method: "POST",
+          fetch(`/api/posts/${encodeURIComponent(postId)}`, {
+            method: "DELETE",
           })
             .then((response) => {
               if (!response.ok) {
@@ -679,13 +679,11 @@
 
         const followButton = document.getElementById('followButton');
         const isFollowing = followButton.classList.contains('following');
-        const url = isFollowing 
-          ? `/api/follow/${encodeURIComponent(viewedEmail)}/unfollow`
-          : `/api/follow/${encodeURIComponent(viewedEmail)}`;
+        const url = `/api/members/me/following/${encodeURIComponent(viewedEmail)}`;
 
         try {
           const response = await fetch(url, {
-            method: 'POST',
+            method: isFollowing ? 'DELETE' : 'POST',
             headers: {
               'Content-Type': 'application/json'
             }
@@ -717,7 +715,7 @@
         if (!viewedEmail) return;
 
         try {
-          const response = await fetch(`/api/follow/${encodeURIComponent(viewedEmail)}/stats`);
+          const response = await fetch(`/api/members/${encodeURIComponent(viewedEmail)}/follow-stats`);
           if (response.ok) {
             const stats = await response.json();
             // 통계 업데이트 (필요시)
@@ -741,7 +739,7 @@
         if (!viewedEmail) return;
 
         try {
-          const response = await fetch(`/api/follow/${encodeURIComponent(viewedEmail)}/followers`);
+          const response = await fetch(`/api/members/${encodeURIComponent(viewedEmail)}/followers`);
           if (!response.ok) {
             throw new Error('팔로워 목록을 불러올 수 없습니다.');
           }
@@ -760,7 +758,7 @@
         if (!viewedEmail) return;
 
         try {
-          const response = await fetch(`/api/follow/${encodeURIComponent(viewedEmail)}/following`);
+          const response = await fetch(`/api/members/${encodeURIComponent(viewedEmail)}/following`);
           if (!response.ok) {
             throw new Error('팔로잉 목록을 불러올 수 없습니다.');
           }
@@ -863,13 +861,11 @@
       // 팔로우 목록에서 개별 팔로우 토글
       async function toggleFollowItem(email, button) {
         const isFollowing = button.classList.contains('following');
-        const url = isFollowing 
-          ? `/api/follow/${encodeURIComponent(email)}/unfollow`
-          : `/api/follow/${encodeURIComponent(email)}`;
+        const url = `/api/members/me/following/${encodeURIComponent(email)}`;
 
         try {
           const response = await fetch(url, {
-            method: 'POST',
+            method: isFollowing ? 'DELETE' : 'POST',
             headers: {
               'Content-Type': 'application/json'
             }

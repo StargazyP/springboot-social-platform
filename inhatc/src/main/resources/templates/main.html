@@ -789,34 +789,34 @@
   </head>
   <body>
     <div class="wrapper">
-      <!-- 왼쪽 사이드바 (X.com 스타일) -->
-      <div class="sidebar">
-        <a href="/main" class="sidebar-item active">
-          <img src="/images/home.png" alt="home" />
-          <span>Home</span>
-        </a>
-        <a href="/member/mypage" class="sidebar-item">
-          <img src="/images/user.png" alt="User" />
-          <span>User</span>
-        </a>
-        <a href="/chat/message" class="sidebar-item">
-          <img src="/images/message.svg" alt="Message" />
-          <span>Message</span>
-        </a>
-        <div class="sidebar-item notification-icon-container" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-          <img src="/images/alram.png" alt="Alarm" id="notificationIcon" />
-          <span>Alarm</span>
-          <span id="notificationBadge" class="notification-badge">0</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-          <img src="/images/logout.png" alt="Logout" />
-          <span>Logout</span>
-        </div>
-        <form id="logout" action="/api/members/logout" method="post"></form>
-      </div>
-
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
+        <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
+        <div class="sidebar">
+          <a href="/main" class="sidebar-item active">
+            <img src="/images/home.png" alt="home" />
+            <span>Home</span>
+          </a>
+          <a href="/member/mypage" class="sidebar-item">
+            <img src="/images/user.png" alt="User" />
+            <span>User</span>
+          </a>
+          <a href="/chat/message" class="sidebar-item">
+            <img src="/images/message.svg" alt="Message" />
+            <span>Message</span>
+          </a>
+          <div class="sidebar-item notification-icon-container" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
+            <img src="/images/alram.png" alt="Alarm" id="notificationIcon" />
+            <span>Alarm</span>
+            <span id="notificationBadge" class="notification-badge">0</span>
+          </div>
+          <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
+            <img src="/images/logout.png" alt="Logout" />
+            <span>Logout</span>
+          </div>
+          <form id="logout" action="/api/members/logout" method="post"></form>
+        </div>
+
         <!-- 상단 탭 (추천/팔로잉) -->
         <div class="top-tabs">
           <button class="tab-button active" id="forYouTab" onclick="switchTab('forYou')">
@@ -1486,7 +1486,7 @@
         }
 
         try {
-          const response = await fetch("/api/posts/upload", {
+          const response = await fetch("/api/posts", {
             method: "POST",
             body: formData,
             credentials: "include",
@@ -1745,7 +1745,7 @@
             return;
           }
 
-          const response = await fetch(`/api/follow/${encodeURIComponent(writerEmail)}/status`);
+          const response = await fetch(`/api/members/me/following/${encodeURIComponent(writerEmail)}/status`);
           if (response.ok) {
             const isFollowing = await response.json();
             updateFollowButton(button, isFollowing);
@@ -1797,12 +1797,10 @@
           }
 
           const isFollowing = button.classList.contains('following');
-          const url = isFollowing 
-            ? `/api/follow/${encodeURIComponent(writerEmail)}/unfollow`
-            : `/api/follow/${encodeURIComponent(writerEmail)}`;
+          const url = `/api/members/me/following/${encodeURIComponent(writerEmail)}`;
 
           const response = await fetch(url, {
-            method: 'POST',
+            method: isFollowing ? 'DELETE' : 'POST',
             credentials: 'include'
           });
 

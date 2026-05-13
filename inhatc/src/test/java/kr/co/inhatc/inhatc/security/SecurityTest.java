@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import kr.co.inhatc.inhatc.PostController;
 import kr.co.inhatc.inhatc.config.SecurityConfig;
 import kr.co.inhatc.inhatc.config.TestSecurityConfig;
-import kr.co.inhatc.inhatc.dto.PostResponseDTO;
 import kr.co.inhatc.inhatc.service.PostService;
 import kr.co.inhatc.inhatc.util.FileUploadValidator;
 
@@ -131,7 +130,7 @@ class SecurityTest {
         MockHttpSession emptySession = new MockHttpSession();
 
         // when & then
-        mockMvc.perform(post("/api/posts/upload")
+        mockMvc.perform(post("/api/posts")
                 .param("content", "테스트")
                 .session(emptySession))
                 .andExpect(status().isUnauthorized());
@@ -164,11 +163,11 @@ class SecurityTest {
 
         // when & then - XSS 문자열은 @Size(max = 2000) 제약을 통과함
         // 실제 XSS 방지는 클라이언트(Thymeleaf)에서 자동 이스케이프 처리됨
-        // 서버에서는 200 OK를 반환하고, 클라이언트에서 렌더링 시 안전하게 처리됨
-        mockMvc.perform(post("/api/posts/upload")
+        // REST 개선 후 생성 성공은 201 Created를 반환하고, 클라이언트에서 렌더링 시 안전하게 처리됨
+        mockMvc.perform(post("/api/posts")
                 .param("content", xssAttempt)
                 .session(session))
-                .andExpect(status().isOk()); // XSS는 서버에서 검증하지 않고 클라이언트에서 처리
+                .andExpect(status().isCreated()); // XSS는 서버에서 검증하지 않고 클라이언트에서 처리
 
         verify(postService, times(1)).savePost(anyString(), eq(xssAttempt), anyString());
     }

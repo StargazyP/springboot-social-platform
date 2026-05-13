@@ -42,7 +42,7 @@ public class ChatController {
         
         if (loginEmail == null) {
             log.warn("채팅 페이지 접근 실패: 세션에 loginEmail이 없음");
-            return "redirect:/";
+            return "redirect:/login";
         }
 
         // senderEmail은 항상 세션 유저 (로그인한 유저)

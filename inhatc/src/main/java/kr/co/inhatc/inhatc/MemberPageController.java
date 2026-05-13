@@ -58,7 +58,7 @@ public class MemberPageController {
     public String mypage(HttpSession session, Model model) {
         String email = (String) session.getAttribute("loginEmail");
         if (email == null) {
-            return "redirect:/"; // 로그인 안 되어 있으면 로그인 페이지로
+            return "redirect:/login";
         }
 
         MemberDTO member = memberService.getMemberByEmail(email);
@@ -101,7 +101,7 @@ public class MemberPageController {
         if (sessionEmail == null) {
             log.warn("프로필 업로드 실패: 세션에 로그인 정보가 없음");
             model.addAttribute("error", "로그인이 필요합니다.");
-            return "redirect:/";
+            return "redirect:/login";
         }
         
         if (!sessionEmail.equals(loginEmail)) {
@@ -136,7 +136,7 @@ public class MemberPageController {
         
         if (sessionEmail == null) {
             log.warn("게시글 삭제 실패: 세션에 로그인 정보가 없음");
-            return "redirect:/";
+            return "redirect:/login";
         }
 
         // 게시글 작성자 확인 (보안 강화)
@@ -155,7 +155,7 @@ public class MemberPageController {
             return "redirect:/member/mypage";
         }
         
-        postService.delete(postId);
+        postService.delete(postId, sessionEmail);
         log.info("게시글 삭제 성공: postId={}, 사용자={}", postId, sessionEmail);
         return "redirect:/member/mypage";
     }
@@ -167,7 +167,7 @@ public class MemberPageController {
     public String view(HttpSession session, Model model) {
         String email = (String) session.getAttribute("loginEmail");
         if (email == null) {
-            return "redirect:/";
+            return "redirect:/login";
         }
         return "redirect:/main";
     }
@@ -233,7 +233,7 @@ public class MemberPageController {
     public String postCheck(HttpSession session) {
         String email = (String) session.getAttribute("loginEmail");
         if (email == null) {
-            return "redirect:/";
+            return "redirect:/login";
         }
         return "redirect:/main";
     }
@@ -246,7 +246,7 @@ public class MemberPageController {
         // 로그인 확인
         String loginEmail = (String) session.getAttribute("loginEmail");
         if (loginEmail == null) {
-            return "redirect:/";
+            return "redirect:/login";
         }
 
         try {
@@ -297,7 +297,7 @@ public class MemberPageController {
             session.invalidate();
             log.info("로그아웃: 세션 무효화 완료");
         }
-        return "redirect:/";
+        return "redirect:/login";
     }
 }
 

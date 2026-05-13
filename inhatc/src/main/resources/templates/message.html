@@ -384,33 +384,32 @@
   </head>
   <body>
     <div class="wrapper">
-      <!-- 왼쪽 사이드바 -->
-      <div class="sidebar">
-        <a href="/main" class="sidebar-item">
-          <img src="/images/home.png" alt="home" />
-          <span>Home</span>
-        </a>
-        <a href="/member/mypage" class="sidebar-item">
-          <img src="/images/user.png" alt="User" />
-          <span>User</span>
-        </a>
-        <a href="/chat/message" class="sidebar-item active">
-          <img src="/images/message.svg" alt="Message" />
-          <span>Message</span>
-        </a>
-        <div class="sidebar-item" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-          <img src="/images/alram.png" alt="Alarm" />
-          <span>Alarm</span>
-        </div>
-        <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-          <img src="/images/logout.png" alt="Logout" />
-          <span>Logout</span>
-        </div>
-        <form id="logout" action="/api/members/logout" method="post"></form>
-      </div>
-
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
+        <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
+        <div class="sidebar">
+          <a href="/main" class="sidebar-item">
+            <img src="/images/home.png" alt="home" />
+            <span>Home</span>
+          </a>
+          <a href="/member/mypage" class="sidebar-item">
+            <img src="/images/user.png" alt="User" />
+            <span>User</span>
+          </a>
+          <a href="/chat/message" class="sidebar-item active">
+            <img src="/images/message.svg" alt="Message" />
+            <span>Message</span>
+          </a>
+          <div class="sidebar-item" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
+            <img src="/images/alram.png" alt="Alarm" />
+            <span>Alarm</span>
+          </div>
+          <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
+            <img src="/images/logout.png" alt="Logout" />
+            <span>Logout</span>
+          </div>
+          <form id="logout" action="/api/members/logout" method="post"></form>
+        </div>
 
       <!-- 목록 모드 -->
       <div id="listMode" th:if="${isChatMode == null or isChatMode == false}">
@@ -561,7 +560,7 @@
           return;
         }
         
-        const url = `/api/messages/history?sender=${encodeURIComponent(currentSenderEmail)}&receiver=${encodeURIComponent(currentReceiverEmail)}`;
+        const url = `/api/messages?receiver=${encodeURIComponent(currentReceiverEmail)}`;
         console.log("  - 요청 URL:", url);
         
         fetch(url)
@@ -727,7 +726,7 @@
             formData.append('file', selectedImageFile);
             formData.append('userEmail', currentSenderEmail);
             
-            const uploadResponse = await fetch('/api/messages/upload-image', {
+            const uploadResponse = await fetch('/api/messages/images', {
               method: 'POST',
               body: formData
             });
@@ -824,8 +823,8 @@
         }
 
         // 세션 유저의 message_entity를 조회하여 대화 상대 목록 가져오기
-        // API: /api/messages/conversations?userEmail={세션유저이메일}
-        const url = `/api/messages/conversations?userEmail=${encodeURIComponent(currentSenderEmail)}`;
+        // API: 세션 유저 기준 대화 목록 조회
+        const url = `/api/messages/conversations`;
         console.log("  - 요청 URL:", url);
         console.log("  - 세션 유저 (senderEmail):", currentSenderEmail);
 

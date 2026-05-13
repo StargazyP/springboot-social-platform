@@ -297,7 +297,7 @@ mvn spring-boot:run
 #### 2. 로그아웃
 - **Method**: `POST`
 - **Endpoint**: `/api/members/logout`
-- **Response**: `302 Redirect` → `/`
+- **Response**: `302 Redirect` → `/login`
 - **설명**: 세션 무효화 처리
 
 #### 3. 현재 로그인 사용자 조회
@@ -410,19 +410,19 @@ mvn spring-boot:run
 
 #### 7. 게시글 작성
 - **Method**: `POST`
-- **Endpoint**: `/api/posts/upload`
+- **Endpoint**: `/api/posts`
 - **Content-Type**: `multipart/form-data`
 - **Request Parameters**:
   - `file` (MultipartFile, 선택): 이미지 파일
   - `content` (String, 필수, 최대 2000자): 게시글 내용
 - **Response**: 
-  - 성공: `200 OK` - "게시글이 업로드되었습니다."
+  - 성공: `201 Created` - "게시글이 업로드되었습니다."
   - 실패: `400 Bad Request` 또는 `401 Unauthorized`
 
 #### 8. 게시글 삭제
 - **Method**: `DELETE`
 - **Endpoint**: `/api/posts/{id}`
-- **Response**: `200 OK` - "게시글이 삭제되었습니다."
+- **Response**: `204 No Content`
 
 #### 9. 좋아요 토글
 - **Method**: `POST`
@@ -481,7 +481,7 @@ mvn spring-boot:run
   "parentId": null
 }
 ```
-- **Response**: `CommentResponseDTO` 객체
+- **Response**: `201 Created` - `CommentResponseDTO` 객체
 
 #### 3. 댓글 수정
 - **Method**: `PUT`
@@ -493,7 +493,7 @@ mvn spring-boot:run
 #### 4. 댓글 삭제
 - **Method**: `DELETE`
 - **Endpoint**: `/api/posts/{postId}/comments/{commentId}`
-- **Response**: `200 OK` - "댓글이 삭제되었습니다."
+- **Response**: `204 No Content`
 
 ---
 
@@ -501,27 +501,27 @@ mvn spring-boot:run
 
 #### 1. 팔로우하기
 - **Method**: `POST`
-- **Endpoint**: `/api/follow/{followingEmail}`
+- **Endpoint**: `/api/members/me/following/{followingEmail}`
 - **설명**: 세션에서 로그인 사용자 정보를 가져와 팔로우 처리
 - **Response**: 
   - 성공: `200 OK` - "팔로우 성공"
   - 실패: `400 Bad Request` 또는 `401 Unauthorized`
 
 #### 2. 언팔로우하기
-- **Method**: `POST`
-- **Endpoint**: `/api/follow/{followingEmail}/unfollow`
+- **Method**: `DELETE`
+- **Endpoint**: `/api/members/me/following/{followingEmail}`
 - **Response**: 
   - 성공: `200 OK` - "언팔로우 성공"
   - 실패: `404 Not Found` 또는 `401 Unauthorized`
 
 #### 3. 팔로우 여부 확인
 - **Method**: `GET`
-- **Endpoint**: `/api/follow/{followingEmail}/status`
+- **Endpoint**: `/api/members/me/following/{followingEmail}/status`
 - **Response**: `boolean` (true: 팔로우 중, false: 팔로우 안 함)
 
 #### 4. 팔로워 목록 조회
 - **Method**: `GET`
-- **Endpoint**: `/api/follow/{memberEmail}/followers`
+- **Endpoint**: `/api/members/{memberEmail}/followers`
 - **Response**: 
 ```json
 [
@@ -536,12 +536,12 @@ mvn spring-boot:run
 
 #### 5. 팔로잉 목록 조회
 - **Method**: `GET`
-- **Endpoint**: `/api/follow/{memberEmail}/following`
+- **Endpoint**: `/api/members/{memberEmail}/following`
 - **Response**: `FollowDTO[]` 배열
 
 #### 6. 팔로우 통계 조회
 - **Method**: `GET`
-- **Endpoint**: `/api/follow/{memberEmail}/stats`
+- **Endpoint**: `/api/members/{memberEmail}/follow-stats`
 - **Response**: 
 ```json
 {
@@ -557,9 +557,8 @@ mvn spring-boot:run
 
 #### 1. 채팅 내역 조회
 - **Method**: `GET`
-- **Endpoint**: `/api/messages/history`
+- **Endpoint**: `/api/messages`
 - **Query Parameters**:
-  - `sender` (String, 필수): 발신자 이메일
   - `receiver` (String, 필수): 수신자 이메일
 - **Response**: 
 ```json
@@ -578,8 +577,7 @@ mvn spring-boot:run
 #### 2. 대화 목록 조회
 - **Method**: `GET`
 - **Endpoint**: `/api/messages/conversations`
-- **Query Parameters**:
-  - `userEmail` (String, 필수): 사용자 이메일
+- **설명**: 세션의 로그인 사용자를 기준으로 대화 목록 조회
 - **Response**: 
 ```json
 [
@@ -595,7 +593,7 @@ mvn spring-boot:run
 
 #### 3. 메시지 이미지 업로드
 - **Method**: `POST`
-- **Endpoint**: `/api/messages/upload-image`
+- **Endpoint**: `/api/messages/images`
 - **Content-Type**: `multipart/form-data`
 - **Request Parameters**:
   - `file` (MultipartFile, 필수): 이미지 파일
@@ -614,7 +612,7 @@ mvn spring-boot:run
 
 #### 1. 알림 목록 조회 (읽지 않은 알림만)
 - **Method**: `GET`
-- **Endpoint**: `/posts/notifications`
+- **Endpoint**: `/api/notifications`
 - **설명**: 세션에서 로그인 사용자 정보를 가져와 알림 조회
 - **Response**: 
 ```json
@@ -634,20 +632,18 @@ mvn spring-boot:run
 
 #### 2. 모든 알림 조회 (읽음/안읽음 모두)
 - **Method**: `GET`
-- **Endpoint**: `/posts/notifications/all`
+- **Endpoint**: `/api/notifications/all`
 - **Response**: `NotificationDTO[]` 배열
 
 #### 3. 알림 읽음 처리
 - **Method**: `POST`
-- **Endpoint**: `/posts/notifications/read`
-- **Query Parameters**:
-  - `notificationId` (Long, 필수): 알림 ID
-- **Response**: `200 OK` - "알림이 읽음 처리되었습니다."
+- **Endpoint**: `/api/notifications/{notificationId}/read`
+- **Response**: `204 No Content`
 
 #### 4. 모든 알림 읽음 처리
 - **Method**: `POST`
-- **Endpoint**: `/posts/notifications/read-all`
-- **Response**: `200 OK` - "모든 알림이 읽음 처리되었습니다."
+- **Endpoint**: `/api/notifications/read-all`
+- **Response**: `204 No Content`
 
 #### 5. 알림 페이지 (HTML)
 - **Method**: `GET`

@@ -16,6 +16,11 @@ public class HomeController {
         return "login";  // static/main.html 로 리다이렉트
     }
 
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
+    }
+
     @GetMapping("/main")
     public String main() {
         return "main";

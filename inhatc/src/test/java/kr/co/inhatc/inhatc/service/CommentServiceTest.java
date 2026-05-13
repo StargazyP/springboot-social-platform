@@ -185,7 +185,7 @@ class CommentServiceTest {
                 .thenReturn(Optional.of(testComment));
 
         // when
-        commentService.deleteComment(postId, commentId);
+        commentService.deleteComment(postId, commentId, "test@example.com");
 
         // then
         verify(commentRepository, times(1)).findById(commentId);

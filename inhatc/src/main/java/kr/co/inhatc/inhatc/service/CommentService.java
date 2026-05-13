@@ -158,13 +158,17 @@ public class CommentService {
     /**
      * ✅ 댓글 삭제
      */
-    public void deleteComment(Long postId, Long commentId) {
+    public void deleteComment(Long postId, Long commentId, String requesterEmail) {
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("댓글이 존재하지 않습니다."));
 
         // 게시글 불일치 방지
         if (!comment.getPost().getId().equals(postId)) {
             throw new RuntimeException("해당 댓글은 이 게시글에 속하지 않습니다.");
+        }
+
+        if (!comment.getWriter().getMemberEmail().equals(requesterEmail)) {
+            throw new RuntimeException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
         commentRepository.delete(comment);

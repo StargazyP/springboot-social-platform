@@ -2,12 +2,12 @@ package kr.co.inhatc.inhatc;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
-@RequestMapping("/posts")
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationController {
@@ -28,11 +27,11 @@ public class NotificationController {
     /**
      * 알림 확인 페이지 (HTML) - 읽지 않은 알림만
      */
-    @GetMapping("/check")
+    @GetMapping("/posts/check")
     public String checkNotifications(HttpSession session, Model model) {
         String loginEmail = (String) session.getAttribute("loginEmail");
         if (loginEmail == null) {
-            return "redirect:/";
+            return "redirect:/login";
         }
 
         try {
@@ -53,11 +52,11 @@ public class NotificationController {
     /**
      * 알림 페이지 (HTML) - 모든 알림
      */
-    @GetMapping("/notifications/page")
+    @GetMapping("/posts/notifications/page")
     public String notificationsPage(HttpSession session, Model model) {
         String loginEmail = (String) session.getAttribute("loginEmail");
         if (loginEmail == null) {
-            return "redirect:/";
+            return "redirect:/login";
         }
 
         try {
@@ -78,7 +77,8 @@ public class NotificationController {
     /**
      * 알림 조회 API (JSON) - 읽지 않은 알림만
      */
-    @GetMapping("/notifications")
+    // REST 개선: JSON 알림 API는 /api/notifications 아래로 분리한다.
+    @GetMapping({"/api/notifications", "/posts/notifications"})
     @ResponseBody
     public ResponseEntity<List<NotificationDTO>> getNotifications(HttpSession session) {
         String loginEmail = (String) session.getAttribute("loginEmail");
@@ -98,7 +98,7 @@ public class NotificationController {
     /**
      * 모든 알림 조회 API (JSON) - 읽음/안읽음 모두
      */
-    @GetMapping("/notifications/all")
+    @GetMapping({"/api/notifications/all", "/posts/notifications/all"})
     @ResponseBody
     public ResponseEntity<List<NotificationDTO>> getAllNotifications(HttpSession session) {
         String loginEmail = (String) session.getAttribute("loginEmail");
@@ -118,22 +118,27 @@ public class NotificationController {
     /**
      * 알림 읽음 처리 API
      */
-    @PostMapping("/notifications/read")
+    @PostMapping({"/api/notifications/{notificationId}/read", "/posts/notifications/read"})
     @ResponseBody
     public ResponseEntity<String> markNotificationAsRead(
-            @RequestParam Long notificationId,
+            @org.springframework.web.bind.annotation.PathVariable(required = false) Long notificationId,
+            @RequestParam(required = false) Long notificationIdParam,
             HttpSession session) {
+        Long targetNotificationId = notificationId != null ? notificationId : notificationIdParam;
         String loginEmail = (String) session.getAttribute("loginEmail");
         if (loginEmail == null) {
             return ResponseEntity.status(401).body("로그인이 필요합니다.");
         }
+        if (targetNotificationId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("notificationId가 필요합니다.");
+        }
 
         try {
-            notificationService.markAsRead(notificationId);
-            log.debug("알림 읽음 처리: notificationId={}, loginEmail={}", notificationId, loginEmail);
-            return ResponseEntity.ok("알림이 읽음 처리되었습니다.");
+            notificationService.markAsRead(targetNotificationId);
+            log.debug("알림 읽음 처리: notificationId={}, loginEmail={}", targetNotificationId, loginEmail);
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            log.error("알림 읽음 처리 실패: notificationId={}, loginEmail={}", notificationId, loginEmail, e);
+            log.error("알림 읽음 처리 실패: notificationId={}, loginEmail={}", targetNotificationId, loginEmail, e);
             return ResponseEntity.status(500).body("알림 읽음 처리 실패: 서버 오류가 발생했습니다.");
         }
     }
@@ -141,7 +146,7 @@ public class NotificationController {
     /**
      * 모든 알림 읽음 처리 API
      */
-    @PostMapping("/notifications/read-all")
+    @PostMapping({"/api/notifications/read-all", "/posts/notifications/read-all"})
     @ResponseBody
     public ResponseEntity<String> markAllNotificationsAsRead(HttpSession session) {
         String loginEmail = (String) session.getAttribute("loginEmail");
@@ -152,7 +157,7 @@ public class NotificationController {
         try {
             notificationService.markAllAsRead(loginEmail);
             log.info("모든 알림 읽음 처리: loginEmail={}", loginEmail);
-            return ResponseEntity.ok("모든 알림이 읽음 처리되었습니다.");
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             log.error("모든 알림 읽음 처리 실패: loginEmail={}", loginEmail, e);
             return ResponseEntity.status(500).body("알림 읽음 처리 실패: 서버 오류가 발생했습니다.");

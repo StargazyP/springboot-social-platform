@@ -104,7 +104,7 @@
         function viewPostFromNotification(postId, notificationId) {
             // 알림 읽음 처리
             if (notificationId) {
-                fetch(`/posts/notifications/read?notificationId=${notificationId}`, {
+                fetch(`/api/notifications/${notificationId}/read`, {
                     method: 'POST'
                 }).then(() => {
                     // 메인 페이지로 이동하고 해당 게시물 모달 열기
