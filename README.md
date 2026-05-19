@@ -1,3 +1,6 @@
+# Demo
+https://jangdonggun.duckdns.org/sns/
+
 # 소셜 미디어 플랫폼 (X/Twitter 스타일)
 
 Spring Boot 기반의 실시간 소셜 미디어 플랫폼입니다. 사용자 간 게시글 공유, 댓글, 좋아요, 실시간 채팅 등의 기능을 제공합니다.
