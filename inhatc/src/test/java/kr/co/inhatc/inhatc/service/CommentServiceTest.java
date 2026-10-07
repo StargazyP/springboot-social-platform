@@ -191,5 +191,106 @@ class CommentServiceTest {
         verify(commentRepository, times(1)).findById(commentId);
         verify(commentRepository, times(1)).delete(testComment);
     }
+
+    @Test
+    @DisplayName("대댓글 1단이 루트 replies에 포함된다")
+    void getCommentsByPostId_IncludesDirectReplies() throws Exception {
+        Long postId = 1L;
+        CommentEntity root = testComment;
+        CommentEntity reply = CommentEntity.builder()
+                .comment("1단 답글")
+                .post(testPost)
+                .writer(testMember)
+                .parentComment(root)
+                .build();
+        setId(reply, 2L);
+
+        when(commentRepository.findByPostIdWithWriter(postId))
+                .thenReturn(List.of(root, reply));
+
+        List<CommentResponseDTO> result = commentService.getCommentsByPostId(postId);
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).getReplies().size());
+        assertEquals(2L, result.get(0).getReplies().get(0).getId());
+        assertEquals(1L, result.get(0).getReplies().get(0).getParentCommentId());
+    }
+
+    @Test
+    @DisplayName("2단 이상 대댓글도 트리 replies에 포함된다 (유튜브식 스레드)")
+    void getCommentsByPostId_IncludesNestedReplies() throws Exception {
+        Long postId = 1L;
+        CommentEntity root = testComment;
+        CommentEntity reply = CommentEntity.builder()
+                .comment("1단 답글")
+                .post(testPost)
+                .writer(testMember)
+                .parentComment(root)
+                .build();
+        setId(reply, 2L);
+        CommentEntity nested = CommentEntity.builder()
+                .comment("2단 답글")
+                .post(testPost)
+                .writer(testMember)
+                .parentComment(reply)
+                .build();
+        setId(nested, 3L);
+
+        when(commentRepository.findByPostIdWithWriter(postId))
+                .thenReturn(List.of(root, reply, nested));
+
+        List<CommentResponseDTO> result = commentService.getCommentsByPostId(postId);
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).getReplies().size());
+        CommentResponseDTO depth1 = result.get(0).getReplies().get(0);
+        assertEquals(2L, depth1.getId());
+        assertEquals(1, depth1.getReplies().size());
+        assertEquals(3L, depth1.getReplies().get(0).getId());
+        assertEquals(2L, depth1.getReplies().get(0).getParentCommentId());
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 시 parentComment가 저장된다")
+    void addComment_WithParent_Success() {
+        CommentRequestDTO requestDTO = CommentRequestDTO.builder()
+                .comment("답글")
+                .user("test@example.com")
+                .article(1L)
+                .parentCommentId(1L)
+                .build();
+
+        CommentEntity savedReply = CommentEntity.builder()
+                .comment("답글")
+                .post(testPost)
+                .writer(testMember)
+                .parentComment(testComment)
+                .build();
+        try {
+            setId(savedReply, 10L);
+        } catch (Exception ignored) {
+        }
+
+        when(memberRepository.findByMemberEmail("test@example.com"))
+                .thenReturn(Optional.of(testMember));
+        when(postRepository.findById(1L))
+                .thenReturn(Optional.of(testPost));
+        when(commentRepository.findById(1L))
+                .thenReturn(Optional.of(testComment));
+        when(commentRepository.save(any(CommentEntity.class)))
+                .thenReturn(savedReply);
+
+        CommentResponseDTO result = commentService.addComment(requestDTO);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getParentCommentId());
+        verify(notificationService, never()).createCommentNotification(anyLong(), anyString());
+    }
+
+    private static void setId(CommentEntity entity, Long id) throws Exception {
+        java.lang.reflect.Field idField = CommentEntity.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(entity, id);
+    }
 }
 

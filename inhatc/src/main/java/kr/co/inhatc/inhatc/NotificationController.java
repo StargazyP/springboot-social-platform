@@ -1,6 +1,7 @@
 package kr.co.inhatc.inhatc;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,25 +29,11 @@ public class NotificationController {
      * 알림 확인 페이지 (HTML) - 읽지 않은 알림만
      */
     @GetMapping("/posts/check")
-    public String checkNotifications(HttpSession session, Model model) {
-        String loginEmail = (String) session.getAttribute("loginEmail");
-        if (loginEmail == null) {
+    public String checkNotifications(HttpSession session) {
+        if (session.getAttribute("loginEmail") == null) {
             return "redirect:/login";
         }
-
-        try {
-            List<NotificationDTO> notifications = notificationService.getUnreadNotifications(loginEmail);
-            model.addAttribute("notifications", notifications);
-            model.addAttribute("loginEmail", loginEmail);
-        } catch (Exception e) {
-            log.error("알림 조회 중 오류 발생: loginEmail={}", loginEmail, e);
-            // 에러 발생 시 빈 리스트로 처리
-            model.addAttribute("notifications", java.util.Collections.emptyList());
-            model.addAttribute("loginEmail", loginEmail);
-            model.addAttribute("error", "알림을 불러오는 중 오류가 발생했습니다.");
-        }
-
-        return "notification"; // notification.html 템플릿 사용
+        return "redirect:/posts/notifications/page";
     }
 
     /**
@@ -91,6 +78,26 @@ public class NotificationController {
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
             log.error("알림 조회 API 오류 발생: loginEmail={}", loginEmail, e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    /**
+     * 읽지 않은 알림 수 조회 API
+     */
+    @GetMapping({"/api/notifications/count", "/posts/notifications/count"})
+    @ResponseBody
+    public ResponseEntity<Map<String, Long>> getNotificationCount(HttpSession session) {
+        String loginEmail = (String) session.getAttribute("loginEmail");
+        if (loginEmail == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            long count = notificationService.getUnreadCount(loginEmail);
+            return ResponseEntity.ok(Map.of("count", count));
+        } catch (Exception e) {
+            log.error("알림 수 조회 API 오류 발생: loginEmail={}", loginEmail, e);
             return ResponseEntity.status(500).build();
         }
     }

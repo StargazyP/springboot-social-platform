@@ -87,6 +87,13 @@ public class NotificationService {
     }
 
     /**
+     * 읽지 않은 알림 수 조회
+     */
+    public long getUnreadCount(String recipientEmail) {
+        return notificationRepository.countByRecipientEmailAndIsReadFalse(recipientEmail);
+    }
+
+    /**
      * 사용자의 읽지 않은 알림 조회
      */
     public List<NotificationDTO> getUnreadNotifications(String recipientEmail) {
@@ -170,8 +177,7 @@ public class NotificationService {
     private void sendNotificationCount(String recipientEmail) {
         try {
             long unreadCount = notificationRepository
-                    .findByRecipientEmailAndIsReadFalseOrderByCreatedAtDesc(recipientEmail)
-                    .size();
+                    .countByRecipientEmailAndIsReadFalse(recipientEmail);
             
             String topic = "/topic/notifications/count/" + recipientEmail.replace("@", "_").replace(".", "_");
             messagingTemplate.convertAndSend(topic, unreadCount);

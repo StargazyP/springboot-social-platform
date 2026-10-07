@@ -1,806 +1,31 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
   <head>
+    <script>(function(){try{var t=localStorage.getItem('sns-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('sns-lang')||'ko';document.documentElement.setAttribute('lang',l==='ja'?'ja':'ko');}catch(e){}})();</script>
+    <script src="/js/theme-init.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>게시물 상세</title>
     <link rel="stylesheet" href="/css/sidebar.css" />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        background-color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #0f1419;
-        line-height: 1.5;
-        min-height: 100vh;
-        padding: 0;
-        margin: 0;
-      }
-
-      .wrapper {
-        display: flex;
-        max-width: 1200px;
-        margin: 0 auto;
-        background-color: #ffffff;
-        min-height: 100vh;
-      }
-
-
-      /* 상단 헤더 (뒤로가기 버튼) */
-      .top-header {
-        position: sticky;
-        top: 0;
-        background-color: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid #eff3f4;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        z-index: 100;
-        min-height: 64px;
-      }
-
-      .back-button {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        border: none;
-        background: transparent;
-        font-size: 20px;
-        color: #0f1419;
-      }
-
-      .back-button:hover {
-        background-color: #f7f9f9;
-      }
-
-      .header-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-      }
-
-      /* 게시물 상세 컨테이너 */
-      .post-container {
-        padding: 16px;
-        border-bottom: 1px solid #eff3f4;
-      }
-
-      .post-header {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .profile-img {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: cover;
-        flex-shrink: 0;
-      }
-
-      .post-header-info {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .post-author {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-        text-decoration: none;
-        margin-bottom: 4px;
-        display: block;
-      }
-
-      .post-author:hover {
-        text-decoration: underline;
-      }
-
-      /* 팔로우 버튼 스타일 */
-      .follow-btn {
-        background-color: #0f1419;
-        color: #ffffff;
-        border: none;
-        border-radius: 20px;
-        padding: 8px 20px;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        margin-left: auto;
-      }
-
-      .follow-btn:hover {
-        background-color: #272c30;
-      }
-
-      .follow-btn.following {
-        background-color: #ffffff;
-        color: #0f1419;
-        border: 1px solid #eff3f4;
-      }
-
-      .follow-btn.following:hover {
-        background-color: #f4212e;
-        color: #ffffff;
-        border-color: #f4212e;
-      }
-
-      .post-date {
-        font-size: 15px;
-        color: #536471;
-      }
-
-      .post-content {
-        font-size: 15px;
-        color: #0f1419;
-        margin: 12px 0;
-        line-height: 1.5;
-        word-wrap: break-word;
-      }
-
-      .post-image {
-        width: 100%;
-        border-radius: 16px;
-        margin: 12px 0;
-        object-fit: cover;
-      }
-
-      .post-stats {
-        color: #536471;
-        font-size: 15px;
-        margin-top: 12px;
-      }
-
-      .post-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid #eff3f4;
-      }
-
-      .action-button {
-        background-color: transparent;
-        color: #536471;
-        border: 1px solid #eff3f4;
-        border-radius: 20px;
-        padding: 8px 16px;
-        font-size: 15px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .action-button:hover {
-        background-color: #f7f9f9;
-      }
-
-      .action-button.liked {
-        color: #f4212e;
-        border-color: #f4212e;
-      }
-
-      .delete-button {
-        background-color: #f4212e;
-        color: #ffffff;
-        border: none;
-      }
-
-      .delete-button:hover {
-        background-color: #d91e2e;
-      }
-
-      /* YouTube 스타일 댓글 섹션 */
-      .comment-section {
-        padding: 24px 16px;
-        border-top: 1px solid #e5e5e5;
-        background-color: #ffffff;
-      }
-
-      .comment-section-title {
-        font-size: 16px;
-        font-weight: 500;
-        color: #0f0f0f;
-        margin-bottom: 24px;
-      }
-
-      .comments {
-        margin-bottom: 16px;
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      /* YouTube 스타일 댓글 */
-      .comment {
-        display: flex;
-        gap: 16px;
-        padding: 16px 0;
-        border-bottom: none;
-        position: relative;
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      .comment:not(:last-child) {
-        border-bottom: 1px solid #e5e5e5;
-      }
-
-      /* 스레드 구조 */
-      .comment-thread {
-        position: relative;
-        padding-left: 0;
-      }
-
-      /* 스레드 연결선 */
-      .comment-thread::before {
-        content: '';
-        position: absolute;
-        left: 20px;
-        top: 0;
-        bottom: -12px;
-        width: 2px;
-        background-color: #eff3f4;
-      }
-
-      .comment-thread:last-child::before {
-        display: none;
-      }
-
-      /* YouTube 스타일 - 불필요한 스타일 제거됨 */
-
-      /* YouTube 스타일 프로필 이미지 */
-      .comment .profile-img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        object-fit: cover;
-      }
-
-      .comment-content {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      /* YouTube 스타일 작성자 정보 */
-      .comment-author {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-      }
-
-      .comment-author-name {
-        font-weight: 500;
-        font-size: 13px;
-        color: #0f0f0f;
-        line-height: 18px;
-      }
-
-      .comment-time {
-        color: #606060;
-        font-size: 12px;
-        font-weight: 400;
-      }
-
-      .comment-text {
-        font-size: 14px;
-        color: #0f0f0f;
-        margin: 0;
-        line-height: 20px;
-        word-wrap: break-word;
-        white-space: pre-wrap;
-      }
-
-      /* YouTube 스타일 댓글 액션 */
-      .comment-actions {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-top: 4px;
-        padding-top: 4px;
-      }
-
-      /* YouTube 스타일 답글 버튼 */
-      .reply-button {
-        background-color: transparent;
-        border: none;
-        color: #606060;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        padding: 8px 16px;
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: background-color 0.2s;
-      }
-
-      .reply-button:hover {
-        background-color: #f2f2f2;
-      }
-
-      .reply-button svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      /* 말풍선 버튼 제거됨 */
-
-      .reply-text-button {
-        background-color: transparent;
-        border: none;
-        color: #536471;
-        font-size: 14px;
-        cursor: pointer;
-        padding: 4px 12px;
-        border-radius: 20px;
-        transition: all 0.2s;
-        font-weight: 500;
-      }
-
-      .reply-text-button:hover {
-        background-color: #f7f9f9;
-        color: #0f1419;
-      }
-
-      /* YouTube 스타일 답글 보기 버튼 */
-      .view-replies-button {
-        background-color: transparent;
-        border: none;
-        color: #536471;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        padding: 8px 0;
-        transition: color 0.2s;
-        margin-top: 4px;
-        align-self: flex-start;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        position: relative;
-      }
-
-      .view-replies-button:hover {
-        color: #0f1419;
-      }
-
-      .view-replies-button::before {
-        content: '▼';
-        font-size: 10px;
-        transition: transform 0.2s;
-      }
-
-      /* expanded 상태일 때 화살표 회전 */
-      .view-replies-button.expanded::before {
-        transform: rotate(180deg);
-      }
-
-      /* 대댓글 기본 숨김 - CSS로 처리 */
-      .comment-reply.reply-hidden {
-        display: none !important;
-      }
-
-      /* expanded 상태일 때 대댓글 표시 - CSS 클래스 기반 */
-      .comment-reply:not(.reply-hidden) {
-        display: flex !important;
-      }
-
-      /* 2번 이상 클릭 시 버튼 숨김 */
-      .view-replies-button.hidden {
-        display: none !important;
-      }
-
-      /* Thread View 관련 스타일 제거 (YouTube 스타일에서는 사용 안 함) */
-
-      /* YouTube 스타일 대댓글 */
-      .comment-reply {
-        display: flex;
-        gap: 16px;
-        padding: 8px 0;
-        margin-top: 8px;
-        width: 100%;
-        box-sizing: border-box;
-        position: relative;
-      }
-
-      /* Node 연결선 효과 제거됨 */
-
-      .comment-reply .profile-img {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        object-fit: cover;
-      }
-
-      .comment-reply .comment-content {
-        gap: 6px;
-      }
-
-      .comment-reply .comment-author-name {
-        font-size: 12px;
-      }
-
-      .comment-reply .comment-time {
-        font-size: 11px;
-      }
-
-      .comment-reply .comment-text {
-        font-size: 13px;
-        line-height: 18px;
-      }
-
-      /* 답글 컨테이너는 더 이상 사용하지 않음 (같은 컨테이너에 렌더링) */
-      .comment-replies-container {
-        display: none; /* 숨김 처리 */
-      }
-
-      /* 스레드 스타일 제거 */
-      .comment-thread {
-        display: none; /* 숨김 처리 */
-      }
-
-
-      /* YouTube 스타일 긴 댓글 더보기 버튼 */
-      .expand-comment-button {
-        background-color: transparent;
-        border: none;
-        color: #065fd4;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        padding: 0;
-        margin-left: 4px;
-        text-decoration: none;
-      }
-
-      .expand-comment-button:hover {
-        text-decoration: underline;
-      }
-
-      /* YouTube 스타일 Thread View */
-      .thread-view {
-        padding: 16px;
-      }
-
-      .thread-back-button {
-        background-color: transparent;
-        border: none;
-        color: #065fd4;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        padding: 8px 0;
-        margin-bottom: 16px;
-        transition: color 0.2s;
-      }
-
-      .thread-back-button:hover {
-        color: #0d0d0d;
-      }
-
-      /* 클릭 가능한 댓글 */
-      .clickable-comment {
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-
-      .clickable-comment:hover {
-        background-color: #f7f9f9;
-      }
-
-      /* YouTube 스타일 답글 작성 폼 */
-      .reply-form {
-        margin-top: 12px;
-        padding: 0;
-        display: none;
-      }
-
-      .reply-form.active {
-        display: block;
-      }
-
-      .reply-textarea {
-        width: 100%;
-        padding: 8px 12px;
-        border: none;
-        border-bottom: 1px solid #e5e5e5;
-        border-radius: 0;
-        font-size: 14px;
-        resize: none;
-        outline: none;
-        font-family: inherit;
-        min-height: 40px;
-        margin-bottom: 8px;
-        background-color: transparent;
-        color: #0f0f0f;
-      }
-
-      .reply-textarea:focus {
-        border-bottom-color: #065fd4;
-      }
-
-      .reply-textarea::placeholder {
-        color: #909090;
-      }
-
-      .reply-buttons {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-        margin-top: 8px;
-      }
-
-      .reply-submit-button,
-      .reply-cancel-button {
-        padding: 10px 16px;
-        border-radius: 18px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        border: none;
-        transition: background-color 0.2s;
-      }
-
-      .reply-submit-button {
-        background-color: #d1d5db;
-        color: #0f1419;
-      }
-
-      .reply-submit-button:hover {
-        background-color: #9ca3af;
-      }
-
-      .reply-cancel-button {
-        background-color: transparent;
-        color: #606060;
-      }
-
-      .reply-cancel-button:hover {
-        background-color: #f2f2f2;
-      }
-
-      /* YouTube 스타일 댓글 작성 폼 */
-      .comment-form {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 16px;
-      }
-
-      .comment-textarea {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-bottom: 1px solid #e5e5e5;
-        border-radius: 0;
-        font-size: 14px;
-        resize: none;
-        outline: none;
-        font-family: inherit;
-        min-height: 60px;
-        background-color: transparent;
-        color: #0f0f0f;
-      }
-
-      .comment-textarea:focus {
-        border-bottom-color: #d1d5db;
-      }
-
-      .comment-textarea::placeholder {
-        color: #909090;
-      }
-
-      .comment-submit-button {
-        background-color: #d1d5db;
-        color: #0f1419;
-        border: none;
-        border-radius: 18px;
-        padding: 10px 16px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        align-self: flex-end;
-        width: auto;
-      }
-
-      .comment-submit-button:hover {
-        background-color: #9ca3af;
-      }
-
-      .comment-submit-button:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-      }
-
-      .loading {
-        text-align: center;
-        padding: 60px 20px;
-        color: #536471;
-        font-size: 15px;
-      }
-
-      .error {
-        text-align: center;
-        padding: 60px 20px;
-        color: #f4212e;
-        font-size: 15px;
-      }
-
-      /* 로그인 모달 스타일 */
-      .login-modal {
-        display: none;
-        position: fixed;
-        z-index: 10000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        align-items: center;
-        justify-content: center;
-      }
-
-      .login-modal-content {
-        background-color: #ffffff;
-        padding: 40px 32px;
-        border-radius: 16px;
-        max-width: 400px;
-        width: 90%;
-        position: relative;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      }
-
-      .login-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 32px;
-      }
-
-      .login-modal-header h2 {
-        font-size: 31px;
-        font-weight: 700;
-        color: #0f1419;
-        margin: 0;
-      }
-
-      .login-modal-close {
-        color: #536471;
-        font-size: 28px;
-        font-weight: 300;
-        cursor: pointer;
-        line-height: 1;
-      }
-
-      .login-modal-close:hover {
-        color: #0f1419;
-      }
-
-      .login-modal-content .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 20px;
-      }
-
-      .login-modal-content label {
-        font-size: 15px;
-        font-weight: 500;
-        color: #0f1419;
-      }
-
-      .login-modal-content input[type="email"],
-      .login-modal-content input[type="password"] {
-        width: 100%;
-        padding: 12px 16px;
-        border: 1px solid #eff3f4;
-        border-radius: 8px;
-        font-size: 15px;
-        font-family: inherit;
-        color: #0f1419;
-        background-color: #ffffff;
-        transition: border-color 0.2s;
-        outline: none;
-      }
-
-      .login-modal-content input[type="email"]:focus,
-      .login-modal-content input[type="password"]:focus {
-        border-color: #1d9bf0;
-      }
-
-      .login-modal-content button[type="submit"] {
-        width: 100%;
-        padding: 12px 24px;
-        background-color: #0f1419;
-        color: #ffffff;
-        border: none;
-        border-radius: 24px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        margin-top: 8px;
-      }
-
-      .login-modal-content button[type="submit"]:hover {
-        background-color: #272c30;
-      }
-
-      .login-modal-content .error {
-        color: #f4212e;
-        text-align: center;
-        margin-top: 16px;
-        font-size: 15px;
-        padding: 12px;
-        background-color: #f7f9f9;
-        border-radius: 8px;
-        border: 1px solid #eff3f4;
-      }
-
-      .login-modal-content .signup-link {
-        text-align: center;
-        margin-top: 24px;
-        font-size: 15px;
-        color: #536471;
-      }
-
-      .login-modal-content .signup-link a {
-        color: #1d9bf0;
-        text-decoration: none;
-        font-weight: 500;
-      }
-
-      .login-modal-content .signup-link a:hover {
-        text-decoration: underline;
-      }
-
-      /* 반응형 디자인 */
-      @media (max-width: 768px) {
-        .wrapper {
-          max-width: 100%;
-          border-left: none;
-          border-right: none;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/css/social-theme.css" />
+    <link rel="stylesheet" href="/css/social-pages.css" />
+    <link rel="stylesheet" href="/css/templates-theme.css" />
+    <link rel="stylesheet" href="/css/i18n.css" />
+    <script src="/js/i18n.js" defer></script>
+    <script src="/js/social-ui.js" defer></script>
   </head>
-  <body>
+  <body class="feed-body">
     <div class="wrapper">
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
         <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
         <div class="sidebar">
           <a href="/main" class="sidebar-item">
-            <img src="/images/home.png" alt="home" />
+            <img src="/images/home.svg" alt="home" />
             <span>Home</span>
           </a>
           <a href="/member/mypage" class="sidebar-item">
-            <img src="/images/user.png" alt="User" />
+            <img src="/images/user.svg" alt="User" />
             <span>User</span>
           </a>
           <a href="/chat/message" class="sidebar-item">
@@ -808,40 +33,51 @@
             <span>Message</span>
           </a>
           <div class="sidebar-item" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-            <img src="/images/alram.png" alt="Alarm" />
+            <img src="/images/bell.svg" alt="Alarm" />
             <span>Alarm</span>
           </div>
           <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-            <img src="/images/logout.png" alt="Logout" />
+            <img src="/images/logout.svg" alt="Logout" />
             <span>Logout</span>
           </div>
+          <div class="sidebar-theme">
+            <label class="theme-switch" title="다크 모드">
+              <input type="checkbox" data-theme-toggle aria-label="다크 모드">
+              <span class="theme-switch-slider"></span>
+              <span>테마</span>
+            </label>
+          </div>
+
           <form id="logout" action="/api/members/logout" method="post"></form>
         </div>
 
+        <div class="post-page-column">
         <!-- 상단 헤더 (뒤로가기 버튼) -->
         <div class="top-header">
           <button class="back-button" onclick="goBack()">←</button>
-          <div class="header-title">게시물</div>
-      </div>
-
-      <!-- 게시물 상세 영역 -->
-      <div id="postContainer" class="post-container">
-        <div class="loading">게시물을 불러오는 중...</div>
-      </div>
-
-      <!-- 댓글 섹션 -->
-      <div class="comment-section">
-        <div class="comment-section-title">댓글</div>
-        <div id="comments" class="comments">
-          <!-- 댓글이 여기에 동적으로 추가됩니다 -->
+          <div class="header-title" data-i18n="post.title">게시물</div>
         </div>
-        <div class="comment-form">
-          <textarea
-            id="commentContent"
-            class="comment-textarea"
-            placeholder="댓글을 입력하세요"
-          ></textarea>
-          <button class="comment-submit-button" onclick="submitComment()">댓글 등록</button>
+
+        <!-- 게시물 상세 영역 -->
+        <div id="postContainer" class="post-container">
+          <div class="loading" data-i18n="post.loading">게시물을 불러오는 중...</div>
+        </div>
+
+        <!-- 댓글 섹션 -->
+        <div class="comment-section">
+          <div class="comment-section-title" data-i18n="post.comments">댓글</div>
+          <div id="comments" class="comments">
+            <!-- 댓글이 여기에 동적으로 추가됩니다 -->
+          </div>
+          <div class="comment-form">
+            <textarea
+              id="commentContent"
+              class="comment-textarea"
+              data-i18n-placeholder="post.commentPlaceholder"
+              placeholder="댓글을 입력하세요"
+            ></textarea>
+            <button class="btn btn-comment comment-submit-button" onclick="submitComment()" data-i18n="post.commentSubmit">댓글 등록</button>
+          </div>
         </div>
         </div>
       </div>
@@ -958,6 +194,16 @@
             }
           });
         }
+
+        const commentsEl = document.getElementById('comments');
+        if (commentsEl) {
+          commentsEl.addEventListener('click', function(e) {
+            const img = e.target.closest('.profile-img-link');
+            if (!img || !img.dataset.writerEmail) return;
+            e.stopPropagation();
+            window.location.href = `/member/profile/${encodeURIComponent(img.dataset.writerEmail)}`;
+          });
+        }
       });
 
       // 페이지 로드 시 게시물 정보 가져오기
@@ -1024,9 +270,13 @@
         const memberEmail = await getMemberEmail();
         const isOwner = memberEmail && post.writerEmail === memberEmail;
 
+        const followLabel = window.SnsI18n && window.SnsI18n.followLabel
+          ? window.SnsI18n.followLabel(false, false)
+          : "팔로우";
+
         const followButtonHtml = !isOwner ? `
           <button class="follow-btn" id="followButton" onclick="toggleFollow()">
-            팔로우
+            ${followLabel}
           </button>
         ` : '';
 
@@ -1051,10 +301,13 @@
           ${post.imgsource ? `<img src="${post.imgsource}" class="post-image" onerror="this.style.display='none';">` : ""}
           <div class="post-stats">조회수: ${post.hits || 0}</div>
           <div class="post-actions">
-            <button class="action-button" id="likeButton" onclick="toggleLike()">
-              ❤️ ${post.love || 0}
+            <button class="action-button btn-action" id="likeButton" onclick="toggleLike()">
+              ♥ ${post.love || 0}
             </button>
-            ${isOwner ? `<button class="action-button delete-button" onclick="deletePost()">삭제</button>` : ""}
+            <button class="action-button btn-action" onclick="document.getElementById('commentContent').focus()">
+              💬 댓글
+            </button>
+            ${isOwner ? `<button class="action-button btn-action danger delete-button" onclick="deletePost()">삭제</button>` : ""}
           </div>
         `;
 
@@ -1077,8 +330,19 @@
         container.innerHTML = `<div class="error">${message}</div>`;
       }
 
-      // 로그인된 사용자 이메일 가져오기
-      async function getMemberEmail() {
+      // 로그인된 사용자 이메일 가져오기 (sessionStorage 캐시)
+      let cachedPostPageEmail = null;
+
+      async function getMemberEmail(forceRefresh = false) {
+        if (!forceRefresh) {
+          if (cachedPostPageEmail) return cachedPostPageEmail;
+          const stored = sessionStorage.getItem("loginEmail");
+          if (stored) {
+            cachedPostPageEmail = stored;
+            return stored;
+          }
+        }
+
         try {
           const response = await fetch("/api/members/session", {
             credentials: "include",
@@ -1089,6 +353,10 @@
           }
 
           const data = await response.json();
+          if (data.loginEmail) {
+            cachedPostPageEmail = data.loginEmail;
+            sessionStorage.setItem("loginEmail", data.loginEmail);
+          }
           return data.loginEmail || null;
         } catch (error) {
           console.error("세션 정보 가져오기 오류:", error);
@@ -1132,10 +400,10 @@
           const data = await response.json();
           
           if (data.liked) {
-            button.textContent = `❤️ ${currentCount + 1}`;
+            button.textContent = `♥ ${currentCount + 1}`;
             button.classList.add("liked");
           } else {
-            button.textContent = `❤️ ${currentCount - 1}`;
+            button.textContent = `♥ ${currentCount - 1}`;
             button.classList.remove("liked");
           }
         } catch (error) {
@@ -1198,28 +466,35 @@
 
       // 팔로우 버튼 상태 업데이트 (텍스트 및 hover 처리)
       function updateFollowButton(button, isFollowing) {
+        var label = window.SnsI18n && window.SnsI18n.followLabel
+          ? window.SnsI18n.followLabel(isFollowing, false)
+          : (isFollowing ? "팔로잉" : "팔로우");
+
         if (isFollowing) {
           button.classList.add('following');
-          button.textContent = '팔로잉';
+          button.textContent = label;
           
-          // hover 이벤트가 없으면 추가 (한 번만)
           if (!button.hasAttribute('data-hover-bound')) {
             button.setAttribute('data-hover-bound', 'true');
             button.addEventListener('mouseenter', function() {
               if (this.classList.contains('following')) {
-                this.textContent = '언팔로우';
+                this.textContent = window.SnsI18n && window.SnsI18n.followLabel
+                  ? window.SnsI18n.followLabel(true, true)
+                  : '언팔로우';
               }
             });
             
             button.addEventListener('mouseleave', function() {
               if (this.classList.contains('following')) {
-                this.textContent = '팔로잉';
+                this.textContent = window.SnsI18n && window.SnsI18n.followLabel
+                  ? window.SnsI18n.followLabel(true, false)
+                  : '팔로잉';
               }
             });
           }
         } else {
           button.classList.remove('following');
-          button.textContent = '팔로우';
+          button.textContent = label;
         }
       }
 
@@ -1274,15 +549,22 @@
       // =====================================================
       // 댓글 시스템 (DFS 기반 Node 구조)
       // =====================================================
+
+      function setupCommentProfileImg(img, writerEmail) {
+        if (!writerEmail || writerEmail === "unknown") return;
+        img.dataset.writerEmail = writerEmail;
+        img.classList.add("profile-img-link");
+      }
       
       // CommentNode 클래스 - 댓글을 Node로 표현
       class CommentNode {
         constructor(commentData) {
           this.id = commentData.id;
           this.comment = commentData.comment;
+          this.writer = commentData.writer;
           this.writerName = commentData.writerName;
           this.writerProfile = commentData.writerProfile || "/images/default-profile.png";
-          this.createDate = commentData.createDate;
+          this.createDate = commentData.createdDate || commentData.createDate;
           this.parentCommentId = commentData.parentCommentId;
           this.children = []; // 자식 댓글들 (대댓글)
           this.depth = 0; // 트리 깊이
@@ -1536,6 +818,7 @@
         img.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(img, comment.writer);
 
         const contentDiv = document.createElement("div");
         contentDiv.className = "comment-content";
@@ -1598,6 +881,7 @@
         img.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(img, node.writer);
 
         const contentDiv = document.createElement("div");
         contentDiv.className = "comment-content";
@@ -1824,6 +1108,7 @@
         img.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(img, node.writer);
 
         const contentDiv = document.createElement("div");
         contentDiv.className = "comment-content";
@@ -2009,6 +1294,7 @@
         img.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(img, comment.writer);
 
         const contentDiv = document.createElement("div");
         contentDiv.className = "comment-content";
@@ -2160,6 +1446,7 @@
               replyImg.onerror = function() {
                 this.src = "/images/default-profile.png";
               };
+              setupCommentProfileImg(replyImg, reply.writer);
               
               const replyContentDiv = document.createElement("div");
               replyContentDiv.className = "comment-content";
@@ -2305,6 +1592,7 @@
             replyImg.onerror = function() {
               this.src = "/images/default-profile.png";
             };
+            setupCommentProfileImg(replyImg, reply.writer);
             
             const replyContentDiv = document.createElement("div");
             replyContentDiv.className = "comment-content";
@@ -2426,6 +1714,7 @@
               replyImg.onerror = function() {
                 this.src = "/images/default-profile.png";
               };
+              setupCommentProfileImg(replyImg, reply.writer);
               
               const replyContentDiv = document.createElement("div");
               replyContentDiv.className = "comment-content";
@@ -2511,6 +1800,7 @@
             replyImg.onerror = function() {
               this.src = "/images/default-profile.png";
             };
+            setupCommentProfileImg(replyImg, reply.writer);
             
             const replyContentDiv = document.createElement("div");
             replyContentDiv.className = "comment-content";
@@ -2582,6 +1872,7 @@
         img.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(img, reply.writer);
 
         const contentDiv = document.createElement("div");
         contentDiv.className = "comment-content";
@@ -2750,6 +2041,7 @@
         img.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(img, comment.writer);
 
         const contentDiv = document.createElement("div");
         contentDiv.className = "comment-content";
@@ -2902,7 +2194,7 @@
         originalDiv.style.padding = "16px";
         originalDiv.style.backgroundColor = "#f7f9f9";
         originalDiv.style.borderRadius = "12px";
-        originalDiv.style.borderLeft = "4px solid #1d9bf0";
+        originalDiv.style.borderLeft = "4px solid #0f1419";
         originalDiv.style.cursor = "pointer";
         
         const originalHeader = document.createElement("div");
@@ -2925,7 +2217,7 @@
         replyMainDiv.className = "comment";
         replyMainDiv.style.padding = "16px";
         replyMainDiv.style.backgroundColor = "#ffffff";
-        replyMainDiv.style.border = "2px solid #1d9bf0";
+        replyMainDiv.style.border = "2px solid #0f1419";
         replyMainDiv.style.borderRadius = "12px";
         replyMainDiv.style.marginBottom = "16px";
 
@@ -2935,6 +2227,7 @@
         replyImg.onerror = function() {
           this.src = "/images/default-profile.png";
         };
+        setupCommentProfileImg(replyImg, replyComment.writer);
 
         const replyContentDiv = document.createElement("div");
         replyContentDiv.className = "comment-content";

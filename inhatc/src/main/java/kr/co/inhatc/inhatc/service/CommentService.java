@@ -52,30 +52,30 @@ public class CommentService {
 
     /**
      * ✅ 게시글별 댓글 전체 조회 (N+1 문제 해결, 계층적 구조 지원)
+     * 루트 댓글 아래에 모든 depth의 답글을 재귀적으로 포함합니다.
      */
     public List<CommentResponseDTO> getCommentsByPostId(Long postId) {
-        // JOIN FETCH로 Writer와 Post를 한 번에 조회
         List<CommentEntity> allComments = commentRepository.findByPostIdWithWriter(postId);
-        
-        // 부모 댓글만 필터링 (parentComment가 null인 것들)
-        List<CommentEntity> parentComments = allComments.stream()
+
+        java.util.Map<Long, List<CommentEntity>> childrenByParentId = allComments.stream()
+                .filter(comment -> comment.getParentComment() != null)
+                .collect(Collectors.groupingBy(comment -> comment.getParentComment().getId()));
+
+        return allComments.stream()
                 .filter(comment -> comment.getParentComment() == null)
+                .map(root -> toDtoWithReplies(root, childrenByParentId))
                 .collect(Collectors.toList());
-        
-        // 각 부모 댓글에 답글 추가
-        return parentComments.stream()
-                .map(parent -> {
-                    CommentResponseDTO dto = new CommentResponseDTO(parent);
-                    // 해당 부모 댓글의 답글들 찾기
-                    List<CommentResponseDTO> replies = allComments.stream()
-                            .filter(comment -> comment.getParentComment() != null 
-                                    && comment.getParentComment().getId().equals(parent.getId()))
-                            .map(CommentResponseDTO::new)
-                            .collect(Collectors.toList());
-                    dto.setReplies(replies);
-                    return dto;
-                })
-                .collect(Collectors.toList());
+    }
+
+    private CommentResponseDTO toDtoWithReplies(
+            CommentEntity comment,
+            java.util.Map<Long, List<CommentEntity>> childrenByParentId) {
+        CommentResponseDTO dto = new CommentResponseDTO(comment);
+        List<CommentEntity> children = childrenByParentId.getOrDefault(comment.getId(), List.of());
+        dto.setReplies(children.stream()
+                .map(child -> toDtoWithReplies(child, childrenByParentId))
+                .collect(Collectors.toList()));
+        return dto;
     }
 
     /**

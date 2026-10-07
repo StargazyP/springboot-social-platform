@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -98,6 +99,23 @@ public class PostController {
     }
 
     /**
+     * 게시글 수정 (본인만)
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updatePost(
+            @PathVariable Long id,
+            @RequestParam("content") @NotBlank(message = "게시글 내용은 필수입니다.")
+            @Size(max = 2000, message = "게시글 내용은 2000자 이하여야 합니다.") String content,
+            HttpSession session) {
+        String email = (String) session.getAttribute("loginEmail");
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        postService.updatePost(id, email, content);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * 좋아요 토글
      */
     @PostMapping("/{postId}/likes")
@@ -128,7 +146,7 @@ public class PostController {
      */
     // REST 개선: 게시글 생성은 컬렉션 리소스(POST /api/posts)로 받는다.
     @PostMapping({"", "/upload"})
-    public ResponseEntity<String> uploadImage(
+    public ResponseEntity<PostResponseDTO> uploadImage(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam("content") @NotBlank(message = "게시글 내용은 필수입니다.") 
             @Size(max = 2000, message = "게시글 내용은 2000자 이하여야 합니다.") String content,
@@ -136,25 +154,22 @@ public class PostController {
 
         String email = (String) session.getAttribute("loginEmail");
         if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         try {
-            // 이미지 업로드 후 URL 반환
-            String fileUrl = postService.imgupload(file, email);
+            String fileUrl = file != null && !file.isEmpty()
+                    ? postService.imgupload(file, email)
+                    : null;
 
-            // 게시글 저장 (DB에는 URL 저장)
-            postService.savePost(email, content, fileUrl);
+            PostResponseDTO created = postService.savePost(email, content, fileUrl);
 
             log.info(kr.co.inhatc.inhatc.constants.AppConstants.LogMessage.POST_UPLOAD_SUCCESS + ": 사용자={}, 파일={}", 
                     email, file != null ? file.getOriginalFilename() : "없음");
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(kr.co.inhatc.inhatc.constants.AppConstants.SuccessMessage.POST_UPLOAD_SUCCESS);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
             log.warn(kr.co.inhatc.inhatc.constants.AppConstants.LogMessage.POST_UPLOAD_FAILED, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(String.format(kr.co.inhatc.inhatc.constants.AppConstants.ErrorMessage.POST_UPLOAD_FAILED, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             log.error("게시물 업로드 중 예외 발생: 사용자={}", email, e);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);

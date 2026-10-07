@@ -52,6 +52,42 @@ class MemberServiceTest {
     }
 
     @Test
+    @DisplayName("회원가입 성공")
+    void save_Success() {
+        MemberDTO dto = MemberDTO.builder()
+                .memberEmail(testEmail)
+                .memberPassword(testPassword)
+                .memberName("테스트 사용자")
+                .build();
+
+        when(memberRepository.findByMemberEmail(testEmail)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(testPassword)).thenReturn(encodedPassword);
+        when(memberRepository.save(any(MemberEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        memberService.save(dto);
+
+        verify(memberRepository, times(1)).findByMemberEmail(testEmail);
+        verify(passwordEncoder, times(1)).encode(testPassword);
+        verify(memberRepository, times(1)).save(any(MemberEntity.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 중복 이메일")
+    void save_Fail_DuplicateEmail() {
+        MemberDTO dto = MemberDTO.builder()
+                .memberEmail(testEmail)
+                .memberPassword(testPassword)
+                .memberName("테스트 사용자")
+                .build();
+
+        when(memberRepository.findByMemberEmail(testEmail)).thenReturn(Optional.of(testMember));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> memberService.save(dto));
+        assertTrue(ex.getMessage().contains("이미 사용 중인 이메일"));
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("로그인 성공 - 암호화된 비밀번호")
     void login_Success_WithEncryptedPassword() {
         // given

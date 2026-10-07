@@ -1,0 +1,138 @@
+/* All templates — black/white theme (no blue accent) */
+
+:root {
+  --accent: #0f1419;
+  --accent-hover: #272c30;
+  --accent-soft: rgba(15, 20, 25, 0.08);
+  --btn-primary-bg: #0f1419;
+  --btn-primary-hover: #272c30;
+  --btn-primary-text: #ffffff;
+  --tab-indicator: #0f1419;
+}
+
+[data-theme="dark"] {
+  --accent: #3a4048;
+  --accent-hover: #4a5159;
+  --accent-soft: rgba(255, 255, 255, 0.08);
+  --btn-primary-bg: #3a4048;
+  --btn-primary-hover: #4a5159;
+  --btn-primary-text: #ffffff;
+  --tab-indicator: #eff3f4;
+}
+
+/* Links — default black text, hover black bg + white text */
+.auth-footer a,
+.signup-link a {
+  color: var(--text);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill, 9999px);
+  transition: background 0.15s, color 0.15s;
+}
+
+.auth-footer a:hover,
+.signup-link a:hover {
+  background: #0f1419;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* Buttons — black bg, white text */
+.btn-primary,
+.btn-accent,
+.btn-send,
+.btn-message,
+.btn-comment,
+.comment-submit-button,
+.reply-submit-button,
+.follow-btn:not(.following),
+.follow-item-btn.follow,
+#sendButton,
+#uploadFormContainer button[type="submit"],
+.content-container .footer button,
+.error-shell .btn-home,
+.auth-form .btn-primary,
+.auth-form .btn-accent {
+  background: #0f1419;
+  color: #ffffff;
+  border-color: #0f1419;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-accent:hover:not(:disabled),
+.btn-send:hover:not(:disabled),
+.btn-message:hover,
+.btn-comment:hover:not(:disabled),
+.comment-submit-button:hover:not(:disabled),
+.reply-submit-button:hover:not(:disabled),
+.follow-btn:not(.following):hover,
+.follow-item-btn.follow:hover,
+#sendButton:hover:not(:disabled),
+#uploadFormContainer button[type="submit"]:hover,
+.content-container .footer button:hover,
+.error-shell .btn-home:hover,
+.auth-form .btn-primary:hover:not(:disabled),
+.auth-form .btn-accent:hover:not(:disabled) {
+  background: #272c30;
+  color: #ffffff;
+  border-color: #272c30;
+}
+
+/* Icon / action hovers */
+.input-toggle:hover,
+.btn-icon:hover,
+.btn-action:hover:not(.liked):not(.danger),
+.action-button:hover:not(.liked):not(.delete-button),
+.reply-button:hover,
+.reply-text-button:hover,
+.view-replies-button:hover,
+.expand-comment-button:hover,
+.thread-back-button:hover,
+.btn-reply:hover {
+  background: #0f1419;
+  color: #ffffff;
+}
+
+.input-toggle,
+.btn-icon,
+.expand-comment-button,
+.thread-back-button {
+  color: var(--text);
+}
+
+/* Sent messages / avatars */
+.message.sent .message-content,
+.message.user .bubble,
+.conversation-avatar,
+.profile-edit-badge,
+.auth-brand-logo {
+  background: #0f1419;
+  color: #ffffff;
+}
+
+/* Tabs */
+.tab-button.active {
+  color: #0f1419;
+  border-bottom-color: #0f1419;
+}
+
+[data-theme="dark"] .tab-button.active {
+  color: #eff3f4;
+  border-bottom-color: #eff3f4;
+}
+
+/* Focus — black ring, not blue */
+.form-control:focus,
+.form-field input:focus,
+.form-field textarea:focus,
+.reply-textarea:focus,
+.comment-textarea:focus,
+#messageInput:focus,
+#commentForm .comment-textarea:focus {
+  border-color: #0f1419;
+  box-shadow: 0 0 0 3px rgba(15, 20, 25, 0.12);
+}
+
+.theme-switch input:checked + .theme-switch-slider {
+  background: #3a4048;
+}

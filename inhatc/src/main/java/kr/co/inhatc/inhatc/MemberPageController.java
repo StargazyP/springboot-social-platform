@@ -126,6 +126,27 @@ public class MemberPageController {
     }
 
     /**
+     * 프로필 배너 업로드
+     */
+    @PostMapping("/upload-banner")
+    public String uploadBanner(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("loginEmail") @NotBlank @Email String loginEmail,
+            HttpSession session) {
+        String sessionEmail = (String) session.getAttribute("loginEmail");
+        if (sessionEmail == null || !sessionEmail.equals(loginEmail)) {
+            return "redirect:/login";
+        }
+        try {
+            memberService.storeBannerFile(file, loginEmail);
+            log.info("배너 업로드 성공: {}", loginEmail);
+        } catch (IOException e) {
+            log.error("배너 업로드 중 오류: {}", loginEmail, e);
+        }
+        return "redirect:/member/mypage";
+    }
+
+    /**
      * 게시글 삭제
      */
     @PostMapping("/delete")
@@ -222,6 +243,48 @@ public class MemberPageController {
                     .body(resource);
         } catch (Exception e) {
             log.error("프로필 이미지 조회 중 오류 발생: email={}", email, e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * 프로필 배너 이미지 조회
+     */
+    @GetMapping("/Bannersource/{email}")
+    public ResponseEntity<Resource> getBannerImage(@PathVariable String email) {
+        try {
+            Path file = null;
+            String[] extensions = {"png", "jpg", "jpeg", "webp"};
+            for (String ext : extensions) {
+                Path testPath = Paths.get(profileUploadDir, email, "banner." + ext);
+                if (Files.exists(testPath)) {
+                    file = testPath;
+                    break;
+                }
+            }
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(file.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType = "image/png";
+            String filename = file.getFileName().toString().toLowerCase();
+            if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+                contentType = "image/jpeg";
+            } else if (filename.endsWith(".webp")) {
+                contentType = "image/webp";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+                    .body(resource);
+        } catch (Exception e) {
+            log.error("배너 이미지 조회 중 오류: email={}", email, e);
             return ResponseEntity.notFound().build();
         }
     }

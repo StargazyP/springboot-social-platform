@@ -1,6 +1,7 @@
 package kr.co.inhatc.inhatc;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import jakarta.servlet.http.HttpSession;
@@ -99,6 +101,24 @@ public class FollowController {
 
         boolean isFollowing = followService.isFollowing(followerEmail, followingEmail);
         return ResponseEntity.ok(isFollowing);
+    }
+
+    /**
+     * 여러 사용자에 대한 팔로우 여부 일괄 확인
+     */
+    @PostMapping("/members/me/following/status/batch")
+    public ResponseEntity<Map<String, Boolean>> getFollowingStatusBatch(
+            @RequestBody Map<String, List<String>> body,
+            HttpSession session) {
+        String followerEmail = (String) session.getAttribute("loginEmail");
+
+        if (followerEmail == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<String> emails = body != null ? body.get("emails") : null;
+        Map<String, Boolean> statusMap = followService.getFollowingStatusBatch(followerEmail, emails);
+        return ResponseEntity.ok(statusMap);
     }
 
     /**

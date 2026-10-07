@@ -1,0 +1,95 @@
+/* Language switcher — embedded in page header (no viewport overlap) */
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.lang-switcher--fallback {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 90;
+}
+
+.lang-switcher-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-switcher-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.lang-switcher-btn.active {
+  background: #0f1419;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .lang-switcher-btn.active {
+  background: #3a4048;
+  color: #ffffff;
+}
+
+.feed-page-header {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.feed-page-header .top-tabs {
+  flex: 1;
+  min-width: 0;
+  position: static;
+  border-bottom: none;
+  z-index: auto;
+  background: var(--bg);
+}
+
+.feed-page-header .lang-switcher {
+  margin: 8px 12px 8px 0;
+}
+
+.header-toolbar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-right: 8px;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notif-page .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notif-page .page-header-actions .lang-switcher {
+  box-shadow: none;
+}

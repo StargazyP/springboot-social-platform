@@ -33,6 +33,10 @@ public interface FollowRepository extends JpaRepository<FollowEntity, Long> {
 
     // 팔로우 여부 확인
     boolean existsByFollowerAndFollowing(MemberEntity follower, MemberEntity following);
+
+    // 팔로워가 특정 이메일 목록 중 누구를 팔로우하는지 일괄 조회
+    @Query("SELECT f.following.memberEmail FROM FollowEntity f WHERE f.follower = :follower AND f.following.memberEmail IN :emails")
+    List<String> findFollowingEmails(@Param("follower") MemberEntity follower, @Param("emails") List<String> emails);
 }
 
 

@@ -1,670 +1,394 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
   <head>
+    <script>(function(){try{var t=localStorage.getItem('sns-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('sns-lang')||'ko';document.documentElement.setAttribute('lang',l==='ja'?'ja':'ko');}catch(e){}})();</script>
+    <script src="/js/theme-init.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Page</title>
     <link rel="stylesheet" href="/css/sidebar.css" />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        background-color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #0f1419;
-        line-height: 1.5;
-        min-height: 100vh;
-        padding: 0;
-        margin: 0;
-      }
-
-      .wrapper {
-        display: flex;
-        max-width: 1200px;
-        margin: 0 auto;
-        background-color: #ffffff;
-        min-height: 100vh;
-      }
-
-
-      .container {
-        padding: 12px 16px;
-      }
-
-      /* 알림 배지 스타일 */
-      .notification-badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        background-color: #ef4444;
-        color: white;
-        border-radius: 50%;
-        min-width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: bold;
-        padding: 0 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        z-index: 101;
-        opacity: 0;
-        transform: scale(0);
-        transition: opacity 0.3s, transform 0.3s;
-        border: 2px solid #ffffff;
-      }
-      
-      .notification-badge.show {
-        opacity: 1;
-        transform: scale(1);
-      }
-      
-      .notification-icon-container {
-        position: relative;
-      }
-
-      .profile-img-container {
-        text-align: center;
-        padding: 24px 16px;
-        border-bottom: 1px solid #eff3f4;
-      }
-
-      .profile-img {
-        width: 120px;
-        height: 120px;
-        object-fit: cover;
-        border-radius: 50%;
-        display: block;
-        margin: 0 auto 16px;
-      }
-
-      .profile-img-container > div {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-        margin-bottom: 4px;
-      }
-
-      .profile-img-container > div:last-child {
-        font-size: 15px;
-        color: #536471;
-        font-weight: 400;
-      }
-
-      #uploadFormContainer {
-        padding: 16px;
-        border-bottom: 1px solid #eff3f4;
-      }
-
-      #uploadFormContainer form {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-      }
-
-      #profileFileInput {
-        display: none; /* 파일 입력을 숨김 */
-      }
-
-      /* 이미지 업로드 버튼 스타일 (main.html과 동일) */
-      .profile-upload-button {
-        padding: 8px 12px;
-        background-color: #f7f9f9;
-        color: #0f1419;
-        border: 1px solid #eff3f4;
-        border-radius: 20px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .profile-upload-button:hover {
-        background-color: #eff3f4;
-      }
-
-      #uploadFormContainer button[type="submit"] {
-        background-color: #0f1419;
-        color: #ffffff;
-        border: none;
-        border-radius: 24px;
-        padding: 10px 24px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        margin-top: 8px;
-      }
-
-      #uploadFormContainer button[type="submit"]:hover {
-        background-color: #272c30;
-      }
-
-      #post-list {
-        padding: 16px;
-      }
-
-      #post-list h3 {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-        margin-bottom: 16px;
-      }
-
-      .card {
-        padding: 16px;
-        border-bottom: 1px solid #eff3f4;
-        position: relative;
-        transition: background-color 0.2s;
-      }
-
-      .card:hover {
-        background-color: #f7f9f9;
-      }
-
-      .card:last-child {
-        border-bottom: none;
-      }
-
-      .card-header {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f1419;
-        margin-bottom: 8px;
-      }
-
-      .card-body {
-        font-size: 15px;
-        color: #0f1419;
-        margin: 8px 0;
-        word-wrap: break-word;
-      }
-
-      .post-date {
-        font-size: 13px;
-        color: #536471;
-        margin-top: 8px;
-      }
-
-      .content-img {
-        width: 100%;
-        max-width: 100%;
-        border-radius: 16px;
-        margin-top: 12px;
-        object-fit: cover;
-        max-height: 400px;
-      }
-
-      .delete-button {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #536471;
-        cursor: pointer;
-        transition: background-color 0.2s, color 0.2s;
-        font-size: 18px;
-        font-weight: 700;
-        background-color: transparent;
-        border: none;
-      }
-
-      .delete-button:hover {
-        background-color: #f4212e;
-        color: #ffffff;
-      }
-
-      #debugInfo {
-        background-color: #f7f9f9;
-        padding: 12px 16px;
-        margin: 16px;
-        border: 1px solid #eff3f4;
-        border-radius: 8px;
-        font-size: 13px;
-        color: #536471;
-      }
-
-      #debugInfo button {
-        background-color: #0f1419;
-        color: #ffffff;
-        border: none;
-        border-radius: 20px;
-        padding: 6px 12px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        margin-top: 8px;
-      }
-
-      button[onclick*="debugInfo"] {
-        background-color: #0f1419;
-        color: #ffffff;
-        border: none;
-        border-radius: 20px;
-        padding: 6px 12px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        margin: 16px;
-      }
-
-      /* 팔로우 관련 스타일 */
-      .follow-stat {
-        transition: opacity 0.2s;
-      }
-
-      .follow-stat:hover {
-        opacity: 0.7;
-      }
-
-      .follow-btn {
-        background-color: #0f1419 !important;
-        color: #ffffff !important;
-        position: relative;
-      }
-
-      .follow-btn::before {
-        content: '팔로우';
-      }
-
-      .follow-btn.following {
-        background-color: #ffffff !important;
-        color: #0f1419 !important;
-        border: 1px solid #eff3f4 !important;
-      }
-
-      .follow-btn.following::before {
-        content: '팔로잉';
-      }
-
-      .follow-btn.following:hover {
-        background-color: #f4212e !important;
-        color: #ffffff !important;
-        border-color: #f4212e !important;
-      }
-
-      .follow-btn.following:hover::before {
-        content: '언팔로우';
-      }
-
-      /* 모달 스타일 */
-      .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        overflow: auto;
-      }
-
-      .modal-content {
-        background-color: #ffffff;
-        margin: 5% auto;
-        padding: 0;
-        border-radius: 16px;
-        width: 90%;
-        max-width: 400px;
-        max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .modal-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid #eff3f4;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .modal-header h2 {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-        margin: 0;
-      }
-
-      .close {
-        color: #536471;
-        font-size: 28px;
-        font-weight: 300;
-        cursor: pointer;
-        line-height: 1;
-      }
-
-      .close:hover {
-        color: #0f1419;
-      }
-
-      .modal-body {
-        padding: 0;
-        overflow-y: auto;
-        flex: 1;
-      }
-
-      .follow-item {
-        padding: 16px 20px;
-        border-bottom: 1px solid #eff3f4;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-
-      .follow-item:hover {
-        background-color: #f7f9f9;
-      }
-
-      .follow-item:last-child {
-        border-bottom: none;
-      }
-
-      .follow-item-img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      .follow-item-info {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .follow-item-name {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f1419;
-        margin-bottom: 2px;
-      }
-
-      .follow-item-email {
-        font-size: 13px;
-        color: #536471;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .follow-item-btn {
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        border: none;
-        transition: all 0.2s;
-      }
-
-      .follow-item-btn.follow {
-        background-color: #0f1419;
-        color: #ffffff;
-      }
-
-      .follow-item-btn.following {
-        background-color: #ffffff;
-        color: #0f1419;
-        border: 1px solid #eff3f4;
-      }
-
-      .follow-item-btn.following:hover {
-        background-color: #f4212e;
-        color: #ffffff;
-        border-color: #f4212e;
-      }
-
-      /* 반응형 디자인 */
-      @media (max-width: 768px) {
-        .wrapper {
-          max-width: 100%;
-          border-left: none;
-          border-right: none;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/css/social-theme.css" />
+    <link rel="stylesheet" href="/css/social-pages.css" />
+    <link rel="stylesheet" href="/css/templates-theme.css" />
+    <link rel="stylesheet" href="/css/i18n.css" />
+    <script src="/js/i18n.js" defer></script>
+    <script src="/js/social-ui.js" defer></script>
   </head>
 
-  <body>
+  <body class="feed-body page-mypage">
     <div class="wrapper">
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
         <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
         <div class="sidebar">
           <a href="/main" class="sidebar-item">
-            <img src="/images/home.png" alt="home" />
-            <span>Home</span>
+            <img src="/images/home.svg" alt="home" />
+            <span data-i18n="nav.home">Home</span>
           </a>
           <a href="/member/mypage" class="sidebar-item active">
-            <img src="/images/user.png" alt="User" />
-            <span>User</span>
+            <img src="/images/user.svg" alt="User" />
+            <span data-i18n="nav.user">User</span>
           </a>
           <a href="/chat/message" class="sidebar-item">
             <img src="/images/message.svg" alt="Message" />
-            <span>Message</span>
+            <span data-i18n="nav.message">Message</span>
           </a>
           <div class="sidebar-item notification-icon-container" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-            <img src="/images/alram.png" alt="Alarm" id="notificationIcon" />
-            <span>Alarm</span>
+            <img src="/images/bell.svg" alt="Alarm" id="notificationIcon" />
+            <span data-i18n="nav.alarm">Alarm</span>
             <span id="notificationBadge" class="notification-badge">0</span>
           </div>
           <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-            <img src="/images/logout.png" alt="Logout" />
-            <span>Logout</span>
+            <img src="/images/logout.svg" alt="Logout" />
+            <span data-i18n="nav.logout">Logout</span>
           </div>
+          <div class="sidebar-theme">
+            <label class="theme-switch" data-i18n-attr="title" data-i18n="nav.themeDark" title="다크 모드">
+              <input type="checkbox" data-theme-toggle aria-label="다크 모드">
+              <span class="theme-switch-slider"></span>
+              <span data-i18n="nav.theme">테마</span>
+            </label>
+          </div>
+
           <form id="logout" action="/api/members/logout" method="post"></form>
         </div>
 
-        <div class="container">
-        <!-- 디버깅 정보 표시 (개발 중에만 표시) -->
-        <!-- <div id="debugInfo" style="background-color: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc; font-size: 12px; display: none;">
-          <strong>디버깅 정보:</strong><br/>
-          세션 loginEmail: <span id="debugLoginEmail" th:text="${loginEmail}">-</span><br/>
-          조회 viewedEmail: <span id="debugViewedEmail" th:text="${viewedEmail != null ? viewedEmail : (viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail)}">-</span><br/>
-          isOwner 값: <span id="debugIsOwner" th:text="${isOwner}">-</span><br/>
-          isOwner 타입: <span id="debugIsOwnerType">-</span><br/>
-          isOwner != null: <span id="debugIsOwnerNotNull">-</span><br/>
-          isOwner == true: <span id="debugIsOwnerTrue">-</span><br/>
-          <button onclick="document.getElementById('debugInfo').style.display='none'">숨기기</button>
-        </div> -->
-        <!-- <button onclick="document.getElementById('debugInfo').style.display='block'" style="margin-bottom: 10px; padding: 5px 10px; font-size: 12px;">디버깅 정보 보기</button> -->
-        
-        <div class="profile-img-container">
-          <!-- 프로필 이미지 표시 (viewedMember 또는 loggedInMember 사용) -->
-          <img
-            id="profileImage"
-            class="profile-img"
-            th:src="@{/member/Userimgsource/{email}(email=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail})}"
-            alt="Profile Image"
-            onerror="this.src='/images/default-profile.png'"
-          />
-          <div>
-            <span th:text="${viewedMember != null ? viewedMember.memberName : loggedInMember.memberName}"></span>
-            <th:block th:if="${isOwner == null or !isOwner}">
-              <span>님의 프로필</span>
-            </th:block>
-          </div>
-          <div th:if="${viewedMember != null || loggedInMember != null}">
-            <span 
-              th:text="${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail}"
+        <div class="mypage-feed-container">
+        <div class="mypage-profile">
+          <div
+            id="profileBanner"
+            class="profile-banner"
+            th:classappend="${isOwner != null and isOwner == true} ? ' profile-banner-editable' : ''"
+            th:attr="data-email=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail}"
+            data-banner-label="배경 변경"
+            data-i18n-attr="data-banner-label"
+            data-i18n="mypage.bannerChange"
+          ></div>
+
+          <div class="profile-body">
+            <div class="profile-top-row">
+              <div class="profile-img-wrap">
+                <img
+                  id="profileImage"
+                  class="profile-img"
+                  th:classappend="${isOwner != null and isOwner == true} ? ' profile-img-editable' : ''"
+                  th:src="@{/member/Userimgsource/{email}(email=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail})}"
+                  alt="Profile Image"
+                  onerror="this.src='/images/default-profile.png'"
+                />
+                <span th:if="${isOwner != null and isOwner == true}" class="profile-edit-badge" aria-hidden="true">📷</span>
+              </div>
+
+              <div th:if="${isOwner == null or !isOwner}" class="profile-actions profile-actions-compact">
+                <button
+                  id="followButton"
+                th:class="${followStats != null && followStats.isFollowing ? 'follow-btn following' : 'follow-btn'}"
+                th:attr="data-i18n=${followStats != null && followStats.isFollowing ? 'mypage.followingBtn' : 'mypage.follow'}"
+                th:text="${followStats != null && followStats.isFollowing ? '팔로잉' : '팔로우'}"
+                  onclick="toggleFollow()"
+                >팔로우</button>
+                <a
+                  class="btn-message"
+                  th:href="@{/chat/message(receiverEmail=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail})}"
+                >
+                <img src="/images/message.svg" alt="">
+                <span data-i18n="mypage.message">메시지</span>
+              </a>
+              </div>
+            </div>
+
+            <h1 class="profile-name" th:text="${viewedMember != null ? viewedMember.memberName : loggedInMember.memberName}">이름</h1>
+
+            <span
+              id="viewedEmailData"
+              hidden
               th:attr="data-viewed-email=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail}"
             ></span>
-          </div>
-          
-          <!-- 팔로우 통계 및 버튼 -->
-          <div style="margin-top: 16px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap;">
-            <!-- 팔로워 수 -->
-            <div style="cursor: pointer;" onclick="showFollowers()" class="follow-stat">
-              <span style="font-weight: 700; color: #0f1419;" th:text="${followStats != null ? followStats.followerCount : 0}">0</span>
-              <span style="color: #536471; margin-left: 4px;">팔로워</span>
-            </div>
-            <!-- 팔로잉 수 -->
-            <div style="cursor: pointer;" onclick="showFollowing()" class="follow-stat">
-              <span style="font-weight: 700; color: #0f1419;" th:text="${followStats != null ? followStats.followingCount : 0}">0</span>
-              <span style="color: #536471; margin-left: 4px;">팔로잉</span>
-            </div>
-          </div>
-          
-          <!-- 팔로우 버튼 (다른 유저 페이지일 때만 표시) -->
-          <div th:if="${isOwner == null or !isOwner}" style="margin-top: 16px; display: flex; gap: 8px; justify-content: center;">
-            <button 
-              id="followButton"
-              th:class="${followStats != null && followStats.isFollowing ? 'follow-btn following' : 'follow-btn'}"
-              onclick="toggleFollow()"
-              style="background-color: #0f1419; color: #ffffff; border: none; border-radius: 24px; padding: 10px 24px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background-color 0.2s;">
-            </button>
-            <a 
-              th:href="@{/chat/message(receiverEmail=${viewedMember != null ? viewedMember.memberEmail : loggedInMember.memberEmail})}"
-              style="background-color: #1d9bf0; color: #ffffff; border: none; border-radius: 24px; padding: 10px 24px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-              <img src="/images/message.svg" alt="Message" style="width: 20px; height: 20px; object-fit: contain;">
-              메시지
-            </a>
-          </div>
-        </div>
 
-        <!-- 파일 업로드 폼 (본인 페이지일 때만 표시) -->
-        <div id="uploadFormContainer" th:if="${isOwner != null and isOwner == true}">
-          <form
-            id="profileUploadForm"
-            th:action="@{/member/upload}"
-            method="post"
-            enctype="multipart/form-data"
-          >
-            <input type="file" id="profileFileInput" name="file" accept="image/*" required />
-            <button type="button" class="profile-upload-button" onclick="document.getElementById('profileFileInput').click()">
-              프로필 사진 변경
-            </button>
-
-            <!-- 로그인 이메일을 함께 전송 -->
-            <input type="hidden" name="loginEmail" th:value="${loginEmail}" />
-
-            <button type="submit">Upload</button>
-          </form>
-        </div>
-
-        <!-- 사용자 포스트 표시 영역 -->
-        <div id="post-list">
-          <h3>작성한 게시글</h3>
-          <div th:if="${userpost != null && !userpost.isEmpty() || userPosts != null && !userPosts.isEmpty()}">
-            <div th:each="post : ${userpost != null ? userpost : userPosts}" 
-                 class="card post-card" 
-                 th:attr="data-post-id=${post.id}"
-                 style="cursor: pointer;">
-              <!-- 게시글 삭제 버튼 (본인 페이지일 때만 표시) -->
-              <button
-                th:if="${isOwner != null and isOwner == true}"
-                class="delete-button"
-                th:attr="data-post-id=${post.id}"
-                onclick="event.stopPropagation(); deletePost(this);"
-                >×</button>
-              <div class="card-header" th:text="${post.writer}">No Title</div>
-              <div class="card-body" th:text="${post.content}">No Content</div>
-              <div class="post-date">
-                Created: <span th:text="${post.createdDate}">No Date</span>
-                <span th:if="${post.modifiedDate != null}">
-                  | Modified: <span th:text="${post.modifiedDate}">No Date</span>
-                </span>
+            <div class="profile-stats">
+              <div onclick="showFollowers()" class="follow-stat">
+                <span class="stat-value" th:text="${followStats != null ? followStats.followerCount : 0}">0</span>
+                <span class="stat-label" data-i18n="mypage.followers">팔로워</span>
               </div>
-              <div th:if="${post.imgsource != null && !post.imgsource.isEmpty()}">
-                <img
-                  class="content-img"
-                  th:src="@{/api/image/{id}(id=${post.id})}"
-                  alt="Post Image"
+              <div onclick="showFollowing()" class="follow-stat">
+                <span class="stat-value" th:text="${followStats != null ? followStats.followingCount : 0}">0</span>
+                <span class="stat-label" data-i18n="mypage.following">팔로잉</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <form
+          id="profileUploadForm"
+          th:if="${isOwner != null and isOwner == true}"
+          th:action="@{/member/upload}"
+          method="post"
+          enctype="multipart/form-data"
+          hidden
+        >
+          <input type="file" id="profileFileInput" name="file" accept="image/*" />
+          <input type="hidden" name="loginEmail" th:value="${loginEmail}" />
+        </form>
+
+        <form
+          id="bannerUploadForm"
+          th:if="${isOwner != null and isOwner == true}"
+          th:action="@{/member/upload-banner}"
+          method="post"
+          enctype="multipart/form-data"
+          hidden
+        >
+          <input type="file" id="bannerFileInput" name="file" accept="image/*" />
+          <input type="hidden" name="loginEmail" th:value="${loginEmail}" />
+        </form>
+
+        <div id="post-list">
+          <div th:if="${userpost != null && !userpost.isEmpty() || userPosts != null && !userPosts.isEmpty()}">
+            <article th:each="post : ${userpost != null ? userpost : userPosts}"
+                 class="card post-card mypage-post-card"
+                 th:attr="data-post-id=${post.id}">
+              <div class="mypage-post-header">
+                <div class="mypage-post-header-right">
+                  <span class="mypage-post-author" th:text="${post.writerName != null ? post.writerName : post.writer}">작성자</span>
+                  <div th:if="${isOwner != null and isOwner == true}" class="post-menu">
+                    <button type="button" class="post-menu-trigger" data-i18n-attr="aria-label" data-i18n="mypage.postMenu" aria-label="게시물 메뉴" aria-haspopup="true">⋯</button>
+                    <div class="post-menu-dropdown" role="menu">
+                      <button type="button" class="post-menu-item" data-action="edit" role="menuitem" data-i18n="mypage.edit">수정</button>
+                      <button type="button" class="post-menu-item post-menu-item-danger" data-action="delete" role="menuitem" data-i18n="mypage.delete">삭제</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mypage-post-body post-card-link">
+                <p class="mypage-post-content" th:text="${post.content}">No Content</p>
+                <img th:if="${post.imgsource != null && !post.imgsource.isEmpty()}"
+                  class="mypage-post-image"
+                  th:src="${post.imgsource}"
+                  th:alt="${post.writerName != null ? post.writerName + ' 게시물 이미지' : '게시물 이미지'}"
                   onerror="this.style.display='none'"
                 />
               </div>
-            </div>
+            </article>
           </div>
-          <div th:if="${(userpost == null || userpost.isEmpty()) && (userPosts == null || userPosts.isEmpty())}" 
-               style="text-align: center; padding: 60px 20px; color: #536471; font-size: 15px;">
+          <div th:if="${(userpost == null || userpost.isEmpty()) && (userPosts == null || userPosts.isEmpty())}"
+               class="empty-message" data-i18n="mypage.emptyPosts">
             작성한 게시글이 없습니다.
           </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 게시물 수정 모달 -->
+    <div id="editPostModal" class="modal" style="display: none;">
+      <div class="modal-content mypage-edit-modal">
+        <div class="mypage-edit-modal-header">
+          <h2 data-i18n="mypage.editPost">게시물 수정</h2>
+          <button type="button" class="login-modal-close" onclick="closeEditPostModal()" data-i18n-attr="aria-label" data-i18n="common.close" aria-label="닫기">&times;</button>
+        </div>
+        <textarea id="editPostContent" class="comment-textarea" maxlength="2000" data-i18n-placeholder="mypage.editPlaceholder" placeholder="게시물 내용"></textarea>
+        <div class="mypage-edit-modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeEditPostModal()" data-i18n="mypage.cancel">취소</button>
+          <button type="button" class="btn btn-primary" onclick="savePostEdit()" data-i18n="mypage.save">저장</button>
         </div>
       </div>
     </div>
 
     <script>
-      // 게시글 카드 클릭 이벤트 설정
+      let editingPostId = null;
+
+      function closeAllPostMenus() {
+        document.querySelectorAll('.post-menu.open').forEach(function(menu) {
+          menu.classList.remove('open');
+        });
+      }
+
+      function openEditPostModal(postId, content) {
+        editingPostId = postId;
+        document.getElementById('editPostContent').value = content || '';
+        document.getElementById('editPostModal').style.display = 'flex';
+      }
+
+      function closeEditPostModal() {
+        editingPostId = null;
+        document.getElementById('editPostModal').style.display = 'none';
+        document.getElementById('editPostContent').value = '';
+      }
+
+      async function savePostEdit() {
+        if (!editingPostId) return;
+        const content = document.getElementById('editPostContent').value.trim();
+        if (!content) {
+          alert('게시물 내용을 입력해주세요.');
+          return;
+        }
+
+        try {
+          const formData = new FormData();
+          formData.append('content', content);
+          const response = await fetch(`/api/posts/${encodeURIComponent(editingPostId)}`, {
+            method: 'PUT',
+            body: formData,
+            credentials: 'include'
+          });
+          if (!response.ok) {
+            throw new Error('게시물 수정에 실패했습니다.');
+          }
+          const card = document.querySelector(`.mypage-post-card[data-post-id="${editingPostId}"]`);
+          if (card) {
+            const contentEl = card.querySelector('.mypage-post-content');
+            if (contentEl) contentEl.textContent = content;
+          }
+          closeEditPostModal();
+        } catch (error) {
+          console.error(error);
+          alert(error.message || '게시물 수정 중 오류가 발생했습니다.');
+        }
+      }
+
+      function followBtnLabel(isFollowing, hoverUnfollow) {
+        if (window.SnsI18n && window.SnsI18n.followLabel) {
+          return window.SnsI18n.followLabel(isFollowing, hoverUnfollow);
+        }
+        if (isFollowing) return hoverUnfollow ? '언팔로우' : '팔로잉';
+        return '팔로우';
+      }
+
+      document.addEventListener('sns:langchange', function () {
+        var followButton = document.getElementById('followButton');
+        if (followButton) {
+          followButton.textContent = followBtnLabel(followButton.classList.contains('following'), false);
+        }
+        document.querySelectorAll('.follow-item-btn').forEach(function (btn) {
+          btn.textContent = followBtnLabel(btn.classList.contains('following'), false);
+        });
+      });
+
+      // 게시글 카드 클릭 · 메뉴 이벤트
       document.addEventListener('DOMContentLoaded', function() {
-        const postCards = document.querySelectorAll('.post-card');
-        postCards.forEach(function(card) {
-          card.addEventListener('click', function(e) {
-            // 삭제 버튼 클릭 시에는 이벤트 전파 방지
-            if (e.target.classList.contains('delete-button') || e.target.closest('.delete-button')) {
-              return;
-            }
+        document.querySelectorAll('.post-card-link').forEach(function(linkArea) {
+          linkArea.addEventListener('click', function(e) {
+            const card = linkArea.closest('.mypage-post-card');
+            if (!card) return;
             const postId = card.getAttribute('data-post-id');
             if (postId) {
               window.location.href = `/posts/${postId}`;
             }
           });
         });
+
+        document.querySelectorAll('.post-menu-trigger').forEach(function(trigger) {
+          trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const menu = trigger.closest('.post-menu');
+            const wasOpen = menu.classList.contains('open');
+            closeAllPostMenus();
+            if (!wasOpen) menu.classList.add('open');
+          });
+        });
+
+        document.querySelectorAll('.post-menu-item').forEach(function(item) {
+          item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const card = item.closest('.mypage-post-card');
+            const postId = card.getAttribute('data-post-id');
+            closeAllPostMenus();
+
+            if (item.dataset.action === 'edit') {
+              const text = card.querySelector('.mypage-post-content')?.textContent || '';
+              openEditPostModal(postId, text);
+            } else if (item.dataset.action === 'delete') {
+              deletePostById(postId, card);
+            }
+          });
+        });
+
+        document.addEventListener('click', function() {
+          closeAllPostMenus();
+        });
+
+        document.getElementById('editPostModal')?.addEventListener('click', function(e) {
+          if (e.target === this) closeEditPostModal();
+        });
+
+        const profileImage = document.getElementById('profileImage');
+        const profileFileInput = document.getElementById('profileFileInput');
+        const profileUploadForm = document.getElementById('profileUploadForm');
+        const profileBanner = document.getElementById('profileBanner');
+        const bannerFileInput = document.getElementById('bannerFileInput');
+        const bannerUploadForm = document.getElementById('bannerUploadForm');
+
+        function loadBannerImage() {
+          if (!profileBanner) return;
+          const email = profileBanner.getAttribute('data-email');
+          if (!email) return;
+          const img = new Image();
+          img.onload = function () {
+            profileBanner.style.backgroundImage = "url('/member/Bannersource/" + encodeURIComponent(email) + "?t=" + Date.now() + "')";
+            profileBanner.classList.add('has-image');
+          };
+          img.src = '/member/Bannersource/' + encodeURIComponent(email) + '?t=' + Date.now();
+        }
+
+        loadBannerImage();
+
+        if (profileImage && profileImage.classList.contains('profile-img-editable') && profileFileInput && profileUploadForm) {
+          profileImage.addEventListener('click', function () {
+            profileFileInput.click();
+          });
+          profileFileInput.addEventListener('change', function () {
+            if (profileFileInput.files && profileFileInput.files.length > 0) {
+              profileUploadForm.submit();
+            }
+          });
+        }
+
+        if (profileBanner && profileBanner.classList.contains('profile-banner-editable') && bannerFileInput && bannerUploadForm) {
+          profileBanner.addEventListener('click', function () {
+            bannerFileInput.click();
+          });
+          bannerFileInput.addEventListener('change', function () {
+            if (bannerFileInput.files && bannerFileInput.files.length > 0) {
+              bannerUploadForm.submit();
+            }
+          });
+        }
       });
-
-      // 프로필 업로드 폼이 표시되도록 보장 (본인 페이지일 때만)
-      window.onload = function() {
-        // 프로필 업로드 폼이 존재할 때만 표시 (본인 페이지일 때만 존재)
-        const uploadFormContainer = document.getElementById('uploadFormContainer');
-        if (uploadFormContainer) {
-          uploadFormContainer.style.display = 'block';
-          uploadFormContainer.style.visibility = 'visible';
-          uploadFormContainer.removeAttribute('hidden');
-        }
-        
-        const uploadForm = document.getElementById('profileUploadForm');
-        if (uploadForm) {
-          uploadForm.style.display = 'block';
-          uploadForm.style.visibility = 'visible';
-          uploadForm.removeAttribute('hidden');
-        }
-      };
       
-      function deletePost(element) {
-        const postId = element.getAttribute("data-post-id");
-        if (confirm("게시물을 삭제하시겠습니까?")) {
-          fetch(`/api/posts/${encodeURIComponent(postId)}`, {
-            method: "DELETE",
-          })
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error("게시물 삭제 실패");
+      function deletePostById(postId, cardElement) {
+        if (!confirm("게시물을 삭제하시겠습니까?")) return;
+        fetch(`/api/posts/${encodeURIComponent(postId)}`, {
+          method: "DELETE",
+          credentials: "include"
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("게시물 삭제 실패");
+            }
+            if (cardElement) {
+              cardElement.remove();
+            }
+            const list = document.querySelectorAll('.mypage-post-card');
+            if (list.length === 0) {
+              const postList = document.getElementById('post-list');
+              if (postList && !postList.querySelector('.empty-message')) {
+                postList.innerHTML = '<div class="empty-message" data-i18n="mypage.emptyPosts">' +
+                  (window.SnsI18n ? window.SnsI18n.t('mypage.emptyPosts') : '작성한 게시글이 없습니다.') +
+                  '</div>';
               }
-              return response.text();
-            })
-            .then(() => {
-              alert("게시물이 삭제되었습니다.");
-              element.parentElement.remove(); // 삭제된 포스트 숨기기
-            })
-            .catch((error) => console.error("Error:", error));
-        }
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("게시물 삭제 중 오류가 발생했습니다.");
+          });
       }
-
       // 현재 조회 중인 사용자 이메일 가져오기
       function getViewedEmail() {
-        const viewedEmailElement = document.querySelector('[data-viewed-email]');
-        if (viewedEmailElement) {
-          return viewedEmailElement.getAttribute('data-viewed-email');
-        }
-        // Thymeleaf 변수에서 가져오기
-        const emailSpan = document.querySelector('span[th\\:text*="memberEmail"]');
-        if (emailSpan) {
-          return emailSpan.textContent.trim();
+        const data = document.getElementById('viewedEmailData');
+        if (data) {
+          return data.getAttribute('data-viewed-email');
         }
         return null;
       }
@@ -697,8 +421,12 @@
           // 버튼 상태 업데이트
           if (isFollowing) {
             followButton.classList.remove('following');
+            followButton.textContent = followBtnLabel(false, false);
+            followButton.setAttribute('data-i18n', 'mypage.follow');
           } else {
             followButton.classList.add('following');
+            followButton.textContent = followBtnLabel(true, false);
+            followButton.setAttribute('data-i18n', 'mypage.followingBtn');
           }
 
           // 통계 업데이트
@@ -745,7 +473,7 @@
           }
 
           const followers = await response.json();
-          showFollowModal('팔로워', followers, 'follower');
+          showFollowModal(window.SnsI18n ? window.SnsI18n.t('mypage.followers') : '팔로워', followers, 'follower');
         } catch (error) {
           console.error('Error:', error);
           alert(error.message);
@@ -764,7 +492,7 @@
           }
 
           const following = await response.json();
-          showFollowModal('팔로잉', following, 'following');
+          showFollowModal(window.SnsI18n ? window.SnsI18n.t('mypage.following') : '팔로잉', following, 'following');
         } catch (error) {
           console.error('Error:', error);
           alert(error.message);
@@ -799,7 +527,9 @@
         modalBody.className = 'modal-body';
 
         if (items.length === 0) {
-          modalBody.innerHTML = '<div style="padding: 40px; text-align: center; color: #536471;">목록이 비어있습니다.</div>';
+          modalBody.innerHTML = '<div style="padding: 40px; text-align: center; color: #536471;">' +
+            (window.SnsI18n ? window.SnsI18n.t('mypage.followListEmpty') : '목록이 비어있습니다.') +
+            '</div>';
         } else {
           items.forEach(item => {
             const email = type === 'follower' ? item.followerEmail : item.followingEmail;
@@ -829,7 +559,7 @@
                 onclick="event.stopPropagation(); toggleFollowItem('${email}', this)"
                 data-email="${email}"
               >
-                ${isFollowing ? '팔로잉' : '팔로우'}
+                ${followBtnLabel(isFollowing, false)}
               </button>
             `;
 
@@ -878,10 +608,12 @@
           // 버튼 상태 업데이트
           if (isFollowing) {
             button.classList.remove('following');
-            button.textContent = '팔로우';
+            button.classList.add('follow');
+            button.textContent = followBtnLabel(false, false);
           } else {
+            button.classList.remove('follow');
             button.classList.add('following');
-            button.textContent = '팔로잉';
+            button.textContent = followBtnLabel(true, false);
           }
 
           // 통계 업데이트

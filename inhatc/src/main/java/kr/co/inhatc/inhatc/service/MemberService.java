@@ -25,21 +25,38 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     @Value("${app.upload.profile-dir}")
     private String profileUploadDir;
+
+    @Value("${app.security.bcrypt.strength:10}")
+    private int bcryptStrength = 10;
 
     /**
      * 회원가입 - 비밀번호 암호화하여 저장
      */
     public void save(MemberDTO memberDTO) {
-        // 비밀번호 암호화
+        String email = (memberDTO.getMemberEmail() != null ? memberDTO.getMemberEmail() : "").trim();
+        String name = (memberDTO.getMemberName() != null ? memberDTO.getMemberName() : "").trim();
+        if (email.isEmpty()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("이름은 필수입니다.");
+        }
+        if (memberRepository.findByMemberEmail(email).isPresent()) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
+        memberDTO.setMemberEmail(email);
+        memberDTO.setMemberName(name);
+
         String encodedPassword = passwordEncoder.encode(memberDTO.getMemberPassword());
         memberDTO.setMemberPassword(encodedPassword);
-        
+
         MemberEntity entity = MemberEntity.fromDTO(memberDTO);
         memberRepository.save(entity);
-        log.info("회원가입 완료: {}", memberDTO.getMemberEmail());
+        log.info("회원가입 완료: {}", email);
     }
 
     /**
@@ -63,8 +80,8 @@ public class MemberService {
         
         // BCrypt 해시로 시작하는지 확인 (암호화된 비밀번호)
         if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")) {
-            // 암호화된 비밀번호 검증
             if (passwordEncoder.matches(password, storedPassword)) {
+                upgradePasswordHashIfNeeded(member, password);
                 log.info("로그인 성공 (암호화): {}", email);
                 return MemberEntity.toDTO(member);
             }
@@ -83,6 +100,34 @@ public class MemberService {
         
         log.warn("로그인 실패: 비밀번호 불일치 - {}", email);
         return null;
+    }
+
+    /**
+     * 저장된 BCrypt cost가 설정값보다 높으면 로그인 성공 시 재해시 (검증 속도 개선)
+     */
+    private void upgradePasswordHashIfNeeded(MemberEntity member, String rawPassword) {
+        int storedCost = extractBcryptCost(member.getMemberPassword());
+        if (storedCost < 0 || storedCost <= bcryptStrength) {
+            return;
+        }
+        member.setMemberPassword(passwordEncoder.encode(rawPassword));
+        memberRepository.save(member);
+        log.info("비밀번호 cost {} -> {} 재해시: {}", storedCost, bcryptStrength, member.getMemberEmail());
+    }
+
+    private int extractBcryptCost(String hash) {
+        if (hash == null || !hash.startsWith("$2")) {
+            return -1;
+        }
+        String[] parts = hash.split("\\$");
+        if (parts.length < 3) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(parts[2]);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     public MemberDTO getMemberByEmail(String email) {
@@ -117,5 +162,10 @@ public class MemberService {
         } else {
             return "사용자를 찾을 수 없습니다.";
         }
+    }
+
+    public String storeBannerFile(MultipartFile file, String userEmail) throws IOException {
+        Path filePath = kr.co.inhatc.inhatc.util.FileUploadService.uploadBannerImage(file, userEmail, profileUploadDir);
+        return String.format("배너 업로드 성공: %s", filePath.getFileName());
     }
 }

@@ -102,12 +102,11 @@ public class PostService {
      * ✅ 회원 이메일 기준으로 게시글 조회 (삭제되지 않은 것만, N+1 문제 해결)
      */
     public List<PostResponseDTO> findByMemberEmail(String memberEmail) {
-        // JOIN FETCH로 Comments를 한 번에 조회
-        List<PostEntity> posts = postRepository.findByMemberEmailWithComments(memberEmail);
+        List<PostEntity> posts = postRepository.findByMemberEmailOrderByIdDesc(memberEmail);
         MemberEntity member = memberRepository.findByMemberEmail(memberEmail).orElse(null);
 
         return posts.stream()
-                .filter(post -> post.getDeleteYn() == 'N') // 삭제되지 않은 게시글만
+                .filter(post -> post.getDeleteYn() == 'N')
                 .map(post -> PostResponseDTO.fromEntity(post, member))
                 .collect(Collectors.toList());
     }
@@ -132,8 +131,7 @@ public class PostService {
         // 본인 이메일도 추가 (자신의 게시글도 포함)
         followingEmails.add(memberEmail);
 
-        // JOIN FETCH로 Comments를 한 번에 조회
-        List<PostEntity> posts = postRepository.findByMemberEmailsWithComments(followingEmails);
+        List<PostEntity> posts = postRepository.findByMemberEmails(followingEmails);
 
         // Member 정보를 Map으로 변환하여 O(1) 조회
         List<MemberEntity> members = memberRepository.findByMemberEmailIn(followingEmails);
@@ -275,24 +273,41 @@ public class PostService {
     }
 
     /**
+     * 게시글 내용 수정
+     */
+    @Transactional
+    public void updatePost(Long postId, String requesterEmail, String content) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POSTS_NOT_FOUND));
+
+        if (requesterEmail == null || !requesterEmail.equals(post.getMemberEmail())) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        post.updateContent(content);
+        postRepository.save(post);
+    }
+
+    /**
      * 게시글 저장
      */
     @Transactional
-    public void savePost(String email, String content, String filePath) {
+    public PostResponseDTO savePost(String email, String content, String filePath) {
         MemberEntity member = memberRepository.findByMemberEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         PostEntity post = PostEntity.builder()
                 .memberEmail(member.getMemberEmail())
                 .content(content)
-                .imgsource(filePath) // DB에는 상대 경로 저장
+                .imgsource(filePath)
                 .hits(0)
                 .love(0)
                 .deleteYn('N')
-                .createdDate(LocalDateTime.now()) // 명시적으로 생성 날짜 설정
+                .createdDate(LocalDateTime.now())
                 .build();
 
-        postRepository.save(post);
+        PostEntity saved = postRepository.save(post);
+        return PostResponseDTO.fromEntity(saved, member);
     }
 
     /**

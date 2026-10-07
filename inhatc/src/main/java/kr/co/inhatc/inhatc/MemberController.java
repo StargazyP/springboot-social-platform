@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,14 +13,21 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.validation.Valid;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import kr.co.inhatc.inhatc.dto.LoginRequest;
 import kr.co.inhatc.inhatc.dto.MemberDTO;
 import kr.co.inhatc.inhatc.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -35,20 +43,63 @@ public class MemberController {
     private final MemberService memberService;
 
     /**
-     * 회원가입
+     * 회원가입 페이지
      */
-    // @PostMapping("/register")
-    // public ResponseEntity<String> register(@RequestBody MemberDTO memberDTO) {
-    // memberService.save(memberDTO);
-    // return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
-    // }
+    @GetMapping("/signup")
+    public String signupForm() {
+        return "signup";
+    }
 
     /**
-     * 로그인
-     * 세션 고정 공격 방지: 로그인 성공 시 기존 세션 무효화 후 새 세션 생성
+     * 회원가입 (HTML 폼)
      */
-    @PostMapping("/login")
-    public String login(
+    @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public String signup(
+            @RequestParam @NotBlank(message = "이메일은 필수입니다.") @Email(message = "올바른 이메일 형식이 아닙니다.") String email,
+            @RequestParam @NotBlank(message = "비밀번호는 필수입니다.") @Size(min = 4, max = 100, message = "비밀번호는 4자 이상 100자 이하여야 합니다.") String password,
+            @RequestParam @NotBlank(message = "이름은 필수입니다.") @Size(max = 50, message = "이름은 50자 이하여야 합니다.") String name,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        try {
+            MemberDTO memberDTO = MemberDTO.builder()
+                    .memberEmail(email)
+                    .memberPassword(password)
+                    .memberName(name)
+                    .build();
+            memberService.save(memberDTO);
+            redirectAttributes.addFlashAttribute("success", "회원가입이 완료되었습니다. 로그인해 주세요.");
+            return "redirect:/login";
+        } catch (IllegalArgumentException e) {
+            log.warn("회원가입 실패: {}", e.getMessage());
+            model.addAttribute("error", e.getMessage());
+            return "signup";
+        }
+    }
+
+    /**
+     * 회원가입 (JSON API)
+     */
+    @PostMapping(value = "/signup", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> signupApi(@Valid @RequestBody MemberDTO memberDTO) {
+        try {
+            memberService.save(memberDTO);
+            Map<String, String> body = new HashMap<>();
+            body.put("message", "회원가입이 완료되었습니다.");
+            body.put("memberEmail", memberDTO.getMemberEmail());
+            return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> body = new HashMap<>();
+            body.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        }
+    }
+
+    /**
+     * 로그인 (HTML 폼 — 레거시 호환)
+     */
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public String loginForm(
             @RequestParam @NotBlank(message = "이메일은 필수입니다.") @Email(message = "올바른 이메일 형식이 아닙니다.") String email,
             @RequestParam @NotBlank(message = "비밀번호는 필수입니다.") String password,
             HttpServletRequest request,
@@ -57,24 +108,47 @@ public class MemberController {
         MemberDTO memberDTO = memberService.login(email, password);
 
         if (memberDTO != null) {
-            // 세션 고정 공격 방지: 기존 세션 무효화
-            HttpSession oldSession = request.getSession(false);
-            if (oldSession != null) {
-                oldSession.invalidate();
-            }
-            // 새 세션 생성
-            HttpSession newSession = request.getSession(true);
-            // 세션에 이메일 저장
-            newSession.setAttribute("loginEmail", email);
-            log.info("로그인 성공: {} (세션 ID 변경됨)", email);
-
+            establishLoginSession(request, email);
             return "redirect:/main";
-        } else {
-            // 로그인 실패 시 에러 메시지 전달 후 로그인 페이지로
-            log.warn("로그인 실패: {}", email);
-            model.addAttribute("error", "이메일 또는 비밀번호가 올바르지 않습니다.");
-            return "login"; // login.html
         }
+
+        log.warn("로그인 실패: {}", email);
+        model.addAttribute("error", "이메일 또는 비밀번호가 올바르지 않습니다.");
+        return "login";
+    }
+
+    /**
+     * 로그인 (JSON — fetch 기반, 서버 리다이렉트 없음)
+     */
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> loginJson(
+            @Valid @RequestBody LoginRequest loginRequest,
+            HttpServletRequest request) {
+
+        MemberDTO memberDTO = memberService.login(loginRequest.getEmail(), loginRequest.getPassword());
+
+        if (memberDTO == null) {
+            log.warn("로그인 실패: {}", loginRequest.getEmail());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "이메일 또는 비밀번호가 올바르지 않습니다."));
+        }
+
+        establishLoginSession(request, loginRequest.getEmail());
+        Map<String, String> body = new HashMap<>();
+        body.put("loginEmail", loginRequest.getEmail());
+        body.put("redirect", "/main");
+        return ResponseEntity.ok(body);
+    }
+
+    private void establishLoginSession(HttpServletRequest request, String email) {
+        HttpSession oldSession = request.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+        HttpSession newSession = request.getSession(true);
+        newSession.setAttribute("loginEmail", email);
+        log.info("로그인 성공: {} (세션 ID 변경됨)", email);
     }
 
     /**

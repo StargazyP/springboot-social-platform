@@ -1,12 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <script>(function(){try{var t=localStorage.getItem('sns-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오류</title>
+  <script src="/js/theme-init.js"></script>
+  <link rel="stylesheet" href="/css/social-theme.css">
+  <link rel="stylesheet" href="/css/social-pages.css">
+  <link rel="stylesheet" href="/css/templates-theme.css">
+  <script src="/js/social-ui.js" defer></script>
 </head>
-<body>
-    <h2>ERROR</h2>
-    
+<body class="theme-body feed-body">
+  <div class="auth-topbar" style="position:fixed;top:16px;right:16px;z-index:10;">
+    <label class="theme-switch" title="다크 모드">
+      <input type="checkbox" data-theme-toggle aria-label="다크 모드">
+      <span class="theme-switch-slider"></span>
+    </label>
+  </div>
+  <div class="error-shell">
+    <h1 th:text="${status != null ? status : '500'}">500</h1>
+    <h2>문제가 발생했습니다</h2>
+    <p th:text="${message != null ? message : '요청을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'}">
+      요청을 처리하는 중 오류가 발생했습니다.
+    </p>
+    <a href="/main" class="btn btn-primary btn-home">홈으로 돌아가기</a>
+  </div>
 </body>
 </html>

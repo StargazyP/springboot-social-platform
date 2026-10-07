@@ -1,188 +1,129 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <script>(function(){try{var t=localStorage.getItem('sns-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('sns-lang')||'ko';document.documentElement.setAttribute('lang',l==='ja'?'ja':'ko');}catch(e){}})();</script>
+    <script src="/js/theme-init.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: #ffffff;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
-            color: #0f1419;
-            line-height: 1.5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .wrapper {
-            max-width: 400px;
-            width: 100%;
-            background-color: #ffffff;
-        }
-
-        .login-container {
-            padding: 40px 32px;
-            border: 1px solid #eff3f4;
-            border-radius: 16px;
-            background-color: #ffffff;
-        }
-
-        h1 {
-            font-size: 31px;
-            font-weight: 700;
-            color: #0f1419;
-            margin-bottom: 32px;
-            text-align: center;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 15px;
-            font-weight: 500;
-            color: #0f1419;
-        }
-
-        input[type="text"],
-        input[type="password"],
-        input[type="email"] {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #eff3f4;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            color: #0f1419;
-            background-color: #ffffff;
-            transition: border-color 0.2s;
-            outline: none;
-        }
-
-        input[type="text"]:focus,
-        input[type="password"]:focus,
-        input[type="email"]:focus {
-            border-color: #1d9bf0;
-        }
-
-        input[type="text"]::placeholder,
-        input[type="password"]::placeholder,
-        input[type="email"]::placeholder {
-            color: #536471;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px 24px;
-            background-color: #0f1419;
-            color: #ffffff;
-            border: none;
-            border-radius: 24px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 8px;
-        }
-
-        button:hover {
-            background-color: #272c30;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .error {
-            color: #f4212e;
-            text-align: center;
-            margin-top: 16px;
-            font-size: 15px;
-            padding: 12px;
-            background-color: #f7f9f9;
-            border-radius: 8px;
-            border: 1px solid #eff3f4;
-        }
-
-        .signup-link {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 15px;
-            color: #536471;
-        }
-
-        .signup-link a {
-            color: #1d9bf0;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .signup-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* 반응형 디자인 */
-        @media (max-width: 768px) {
-            .login-container {
-                padding: 32px 24px;
-                border: none;
-            }
-
-            h1 {
-                font-size: 27px;
-            }
-        }
-    </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인</title>
+    <link rel="prefetch" href="/main">
+    <link rel="stylesheet" href="/css/social-theme.css">
+    <link rel="stylesheet" href="/css/templates-theme.css">
+    <link rel="stylesheet" href="/css/i18n.css">
+    <script src="/js/i18n.js" defer></script>
+  <script src="/js/social-ui.js" defer></script>
 </head>
+<body class="theme-body">
+  <div class="auth-shell">
+    <aside class="auth-brand">
+      <div class="auth-brand-logo" aria-hidden="true">S</div>
+      <h2>지금 일어나고 있는 일</h2>
+      <p>Bluesky 스타일 피드에서 소식을 공유하고, 팔로우하고, 대화하세요.</p>
+    </aside>
 
-<body>
-    <div class="wrapper">
-        <div class="login-container">
-            <h1>로그인</h1>
-            <!-- action을 /api/members/login 으로 변경하고, input name 일치 -->
-            <form action="/api/members/login" method="post">
-                <div class="form-group">
-                    <label for="email">이메일</label>
-                    <input type="email" id="email" name="email" placeholder="이메일을 입력하세요" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">비밀번호</label>
-                    <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
-                </div>
-                <button type="submit">로그인</button>
-            </form>
+    <main class="auth-panel">
+      <div class="auth-topbar">
+        <label class="theme-switch" title="다크 모드">
+          <input type="checkbox" data-theme-toggle aria-label="다크 모드">
+          <span class="theme-switch-slider"></span>
+          <span>다크</span>
+        </label>
+      </div>
 
-            <!-- 에러 메시지가 있을 경우에만 출력 -->
-            <div th:if="${error}" class="error">
-                <p th:text="${error}"></p>
+      <div class="auth-card">
+        <h1 data-i18n="auth.login">로그인</h1>
+        <form id="loginForm" class="auth-form" action="/api/members/login" method="post" novalidate>
+          <div class="form-field">
+            <label for="email" data-i18n="auth.email">이메일</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="form-field">
+            <label for="password" data-i18n="auth.password">비밀번호</label>
+            <div class="input-wrap">
+              <input type="password" id="password" name="password" class="form-control" placeholder="비밀번호" required autocomplete="current-password">
+              <button type="button" class="input-toggle" data-password-toggle="password" data-i18n="auth.show" aria-label="비밀번호 표시">표시</button>
             </div>
+          </div>
+          <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block" data-i18n="auth.login">로그인</button>
+        </form>
 
-            <div class="signup-link">
-                계정이 없으신가요? <a href="/api/members/signup">회원가입</a>
-            </div>
+        <div id="loginClientError" class="alert alert-error" style="display: none;">
+          <p data-i18n-error="auth.loginFailed">이메일 또는 비밀번호가 올바르지 않습니다.</p>
         </div>
-    </div>
-</body>
 
+        <div th:if="${error}" class="alert alert-error">
+          <p data-i18n-error="auth.loginFailed" th:text="${error}"></p>
+        </div>
+        <div th:if="${success}" class="alert alert-success">
+          <p th:text="${success}"></p>
+        </div>
+
+        <div class="auth-footer">
+          <span data-i18n="auth.noAccount">계정이 없으신가요?</span> <a href="/api/members/signup" data-i18n="auth.signupLink">가입하기</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const submitBtn = document.getElementById('loginSubmitBtn');
+      const clientError = document.getElementById('loginClientError');
+      const serverError = document.querySelector('.alert-error:not(#loginClientError)');
+
+      if (serverError) {
+        serverError.style.display = 'none';
+      }
+      clientError.style.display = 'none';
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) {
+        return;
+      }
+
+      const defaultLabel = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = window.SnsI18n ? window.SnsI18n.t('auth.loggingIn') : '로그인 중…';
+
+      try {
+        const response = await fetch('/api/members/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.loginEmail) {
+            sessionStorage.setItem('loginEmail', data.loginEmail);
+          }
+          window.location.href = data.redirect || '/main';
+          return;
+        }
+
+        let message = window.SnsI18n ? window.SnsI18n.t('auth.loginFailed') : '이메일 또는 비밀번호가 올바르지 않습니다.';
+        try {
+          const errorBody = await response.json();
+          if (errorBody.error) {
+            message = errorBody.error;
+          }
+        } catch (e) { /* ignore */ }
+
+        clientError.querySelector('p').textContent = message;
+        clientError.style.display = 'block';
+      } catch (error) {
+        clientError.querySelector('p').textContent = '로그인 중 오류가 발생했습니다.';
+        clientError.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = defaultLabel;
+      }
+    });
+  </script>
+</body>
 </html>

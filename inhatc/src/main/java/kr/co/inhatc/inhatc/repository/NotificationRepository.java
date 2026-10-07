@@ -21,5 +21,7 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     // 특정 게시물의 알림 조회
     // ✅ 안전: JPA 메서드 이름 기반 쿼리 (SQL Injection 위험 없음)
     List<NotificationEntity> findByPostId(Long postId);
+
+    long countByRecipientEmailAndIsReadFalse(String recipientEmail);
 }
 

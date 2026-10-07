@@ -1,234 +1,71 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
   <head>
+    <script>(function(){try{var t=localStorage.getItem('sns-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('sns-lang')||'ko';document.documentElement.setAttribute('lang',l==='ja'?'ja':'ko');}catch(e){}})();</script>
+    <script src="/js/theme-init.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>알림</title>
     <link rel="stylesheet" href="/css/sidebar.css" />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        background-color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #0f1419;
-        line-height: 1.5;
-        min-height: 100vh;
-        padding: 0;
-        margin: 0;
-      }
-
-      .wrapper {
-        display: flex;
-        max-width: 1200px;
-        margin: 0 auto;
-        background-color: #ffffff;
-        min-height: 100vh;
-      }
-
-      /* 상단 헤더 (뒤로가기 버튼) */
-      .top-header {
-        position: sticky;
-        top: 0;
-        background-color: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid #eff3f4;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        z-index: 100;
-        min-height: 64px;
-      }
-
-      .back-button {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        border: none;
-        background: transparent;
-        font-size: 20px;
-        color: #0f1419;
-      }
-
-      .back-button:hover {
-        background-color: #f7f9f9;
-      }
-
-      .header-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-      }
-
-      /* 알림 배지 스타일 */
-      .notification-badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        background-color: #ef4444;
-        color: white;
-        border-radius: 50%;
-        min-width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: bold;
-        padding: 0 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        z-index: 101;
-        opacity: 0;
-        transform: scale(0);
-        transition: opacity 0.3s, transform 0.3s;
-        border: 2px solid #ffffff;
-      }
-      
-      .notification-badge.show {
-        opacity: 1;
-        transform: scale(1);
-      }
-      
-      .notification-icon-container {
-        position: relative;
-      }
-
-      /* 알림 컨테이너 */
-      .notifications-container {
-        padding: 0;
-      }
-
-      .notification-item {
-        padding: 16px;
-        border-bottom: 1px solid #eff3f4;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: block;
-        text-decoration: none;
-        color: inherit;
-      }
-
-      .notification-item:hover {
-        background-color: #f7f9f9;
-      }
-
-      .notification-item.unread {
-        background-color: #f7f9f9;
-      }
-
-      .notification-item.read {
-        background-color: #ffffff;
-      }
-
-      .notification-type {
-        font-weight: 700;
-        color: #0f1419;
-        margin-bottom: 4px;
-        font-size: 15px;
-      }
-
-      .notification-action {
-        margin: 4px 0;
-        color: #0f1419;
-        font-size: 15px;
-      }
-
-      .notification-content {
-        font-size: 15px;
-        color: #536471;
-        margin-top: 8px;
-        padding: 8px;
-        background-color: #f7f9f9;
-        border-radius: 8px;
-        word-wrap: break-word;
-      }
-
-      .notification-date {
-        font-size: 13px;
-        color: #536471;
-        margin-top: 8px;
-      }
-
-      .empty-message {
-        text-align: center;
-        padding: 60px 20px;
-        color: #536471;
-        font-size: 15px;
-      }
-
-      .loading {
-        text-align: center;
-        padding: 60px 20px;
-        color: #536471;
-        font-size: 15px;
-      }
-
-      .error {
-        text-align: center;
-        padding: 60px 20px;
-        color: #f4212e;
-        font-size: 15px;
-      }
-
-      /* 반응형 디자인 */
-      @media (max-width: 768px) {
-        .wrapper {
-          max-width: 100%;
-          border-left: none;
-          border-right: none;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/css/social-theme.css" />
+    <link rel="stylesheet" href="/css/social-pages.css" />
+    <link rel="stylesheet" href="/css/templates-theme.css" />
+    <link rel="stylesheet" href="/css/i18n.css" />
+    <script src="/js/i18n.js" defer></script>
+    <script src="/js/social-ui.js" defer></script>
   </head>
-  <body>
+  <body class="feed-body">
     <div class="wrapper">
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
         <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
         <div class="sidebar">
           <a href="/main" class="sidebar-item">
-            <img src="/images/home.png" alt="home" />
-            <span>Home</span>
+            <img src="/images/home.svg" alt="home" />
+            <span data-i18n="nav.home">Home</span>
           </a>
           <a href="/member/mypage" class="sidebar-item">
-            <img src="/images/user.png" alt="User" />
-            <span>User</span>
+            <img src="/images/user.svg" alt="User" />
+            <span data-i18n="nav.user">User</span>
           </a>
           <a href="/chat/message" class="sidebar-item">
             <img src="/images/message.svg" alt="Message" />
-            <span>Message</span>
+            <span data-i18n="nav.message">Message</span>
           </a>
           <div class="sidebar-item notification-icon-container active" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-            <img src="/images/alram.png" alt="Alarm" id="notificationIcon" />
-            <span>Alarm</span>
+            <img src="/images/bell.svg" alt="Alarm" id="notificationIcon" />
+            <span data-i18n="nav.alarm">Alarm</span>
             <span id="notificationBadge" class="notification-badge">0</span>
           </div>
           <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-            <img src="/images/logout.png" alt="Logout" />
-            <span>Logout</span>
+            <img src="/images/logout.svg" alt="Logout" />
+            <span data-i18n="nav.logout">Logout</span>
           </div>
+          <div class="sidebar-theme">
+            <label class="theme-switch" data-i18n-attr="title" data-i18n="nav.themeDark" title="다크 모드">
+              <input type="checkbox" data-theme-toggle aria-label="다크 모드">
+              <span class="theme-switch-slider"></span>
+              <span data-i18n="nav.theme">테마</span>
+            </label>
+          </div>
+
           <form id="logout" action="/api/members/logout" method="post"></form>
         </div>
 
-        <!-- 상단 헤더 (뒤로가기 버튼) -->
-        <div class="top-header">
-          <button class="back-button" onclick="goBack()">←</button>
-          <div class="header-title">알림</div>
-        </div>
+        <!-- 알림 열: 헤더 + 목록을 한 컬럼으로 묶어 겹침 방지 -->
+        <div class="notif-page-column">
+          <div class="top-header notif-top-header">
+            <button class="back-button" onclick="goBack()">←</button>
+            <div class="header-title" data-i18n="notif.title">알림</div>
+            <div id="langSwitcher" class="lang-switcher">
+              <button type="button" class="lang-switcher-btn" data-lang="ko" aria-pressed="false">한국어</button>
+              <button type="button" class="lang-switcher-btn" data-lang="ja" aria-pressed="false">日本語</button>
+            </div>
+          </div>
 
-        <!-- 알림 목록 -->
-        <div id="notificationsContainer" class="notifications-container">
-          <div class="loading">알림을 불러오는 중...</div>
+          <div id="notificationsContainer" class="notifications-container">
+            <div class="loading" data-i18n="notif.loading">알림을 불러오는 중...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -316,12 +153,12 @@
       // 12-23 알림 수 조회 함수
       async function fetchNotificationCount() {
         try {
-          const response = await fetch('/posts/notifications', {
+          const response = await fetch('/api/notifications/count', {
             credentials: 'include'
           });
           if (response.ok) {
-            const notifications = await response.json();
-            updateNotificationBadge(notifications.length);
+            const data = await response.json();
+            updateNotificationBadge(data.count || 0);
           }
         } catch (error) {
           console.error('알림 수 조회 실패:', error);
@@ -353,7 +190,7 @@
           
           if (!response.ok) {
             if (response.status === 401) {
-              container.innerHTML = "<div class='error'>로그인이 필요합니다.</div>";
+              container.innerHTML = "<div class='error'>" + (window.SnsI18n ? window.SnsI18n.t("auth.loginRequired") : "로그인이 필요합니다.") + "</div>";
               setTimeout(() => {
                 window.location.href = "/";
               }, 2000);
@@ -370,28 +207,39 @@
           updateNotificationBadge(unreadCount);
         } catch (error) {
           console.error("알림 로드 오류:", error);
-          container.innerHTML = "<div class='error'>알림을 불러올 수 없습니다.</div>";
+          container.innerHTML = "<div class='error'>" + (window.SnsI18n ? window.SnsI18n.t("notif.loadFailed") : "알림을 불러올 수 없습니다.") + "</div>";
         }
       }
 
       // 12-23 알림 렌더링 함수
+      let cachedNotifications = [];
+      let notificationsLoaded = false;
+
       function renderNotifications(notifications) {
+        cachedNotifications = notifications || [];
+        notificationsLoaded = true;
         const container = document.getElementById("notificationsContainer");
+        const i18n = window.SnsI18n;
         
-        if (!notifications || notifications.length === 0) {
-          container.innerHTML = "<div class='empty-message'>새로운 알림이 없습니다.</div>";
+        if (!cachedNotifications || cachedNotifications.length === 0) {
+          container.innerHTML = "<div class='empty-message'>" + (i18n ? i18n.t("notif.empty") : "새로운 알림이 없습니다.") + "</div>";
           return;
         }
 
         container.innerHTML = "";
-        notifications.forEach(notification => {
+        cachedNotifications.forEach(notification => {
           const item = document.createElement("div");
           item.className = `notification-item ${notification.isRead ? 'read' : 'unread'}`;
           
-          const typeText = notification.notificationType === "LIKE" ? "❤️ 좋아요" : "💬 댓글";
-          const actionText = notification.notificationType === "LIKE" ? "좋아요를 눌렀습니다" : "댓글을 남겼습니다";
+          const typeText = notification.notificationType === "LIKE"
+            ? (i18n ? i18n.t("notif.likeType") : "❤️ 좋아요")
+            : (i18n ? i18n.t("notif.commentType") : "💬 댓글");
+          const actionText = notification.notificationType === "LIKE"
+            ? (i18n ? i18n.t("notif.like") : "좋아요를 눌렀습니다")
+            : (i18n ? i18n.t("notif.comment") : "댓글을 남겼습니다");
+          const particle = i18n ? i18n.t("notif.actorParticle") : "님이";
           const actorName = notification.actorName || notification.actorEmail;
-          const date = new Date(notification.createdAt).toLocaleString("ko-KR", {
+          const date = new Date(notification.createdAt).toLocaleString(i18n && i18n.getLang() === "ja" ? "ja-JP" : "ko-KR", {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -401,7 +249,7 @@
           
           item.innerHTML = `
             <div class="notification-type">${typeText}</div>
-            <div class="notification-action">${actorName}님이 ${actionText}</div>
+            <div class="notification-action">${actorName}${particle} ${actionText}</div>
             ${notification.postContent ? `<div class="notification-content">${notification.postContent.substring(0, 100)}${notification.postContent.length > 100 ? '...' : ''}</div>` : ""}
             <div class="notification-date">${date}</div>
           `;
@@ -443,6 +291,12 @@
           container.appendChild(item);
         });
       }
+
+      document.addEventListener("sns:langchange", function () {
+        if (notificationsLoaded) {
+          renderNotifications(cachedNotifications);
+        }
+      });
     </script>
   </body>
 </html>

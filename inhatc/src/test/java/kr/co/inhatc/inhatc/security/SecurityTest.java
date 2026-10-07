@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import kr.co.inhatc.inhatc.PostController;
 import kr.co.inhatc.inhatc.config.SecurityConfig;
 import kr.co.inhatc.inhatc.config.TestSecurityConfig;
+import kr.co.inhatc.inhatc.dto.PostResponseDTO;
 import kr.co.inhatc.inhatc.service.PostService;
 import kr.co.inhatc.inhatc.util.FileUploadValidator;
 
@@ -159,7 +160,8 @@ class SecurityTest {
         
         // Mock 서비스 설정
         when(postService.imgupload(any(), anyString())).thenReturn("/posts/test/image.jpg");
-        doNothing().when(postService).savePost(anyString(), anyString(), anyString());
+        when(postService.savePost(anyString(), anyString(), isNull())).thenReturn(
+                PostResponseDTO.builder().id(1L).content(xssAttempt).build());
 
         // when & then - XSS 문자열은 @Size(max = 2000) 제약을 통과함
         // 실제 XSS 방지는 클라이언트(Thymeleaf)에서 자동 이스케이프 처리됨
@@ -169,7 +171,8 @@ class SecurityTest {
                 .session(session))
                 .andExpect(status().isCreated()); // XSS는 서버에서 검증하지 않고 클라이언트에서 처리
 
-        verify(postService, times(1)).savePost(anyString(), eq(xssAttempt), anyString());
+        verify(postService, times(1)).savePost(anyString(), eq(xssAttempt), isNull());
+        verify(postService, never()).imgupload(any(), anyString());
     }
 }
 

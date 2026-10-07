@@ -20,6 +20,8 @@ FROM eclipse-temurin:19-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache wget
+
 # 빌드된 JAR 파일 복사
 COPY --from=builder /app/target/*.jar app.jar
 

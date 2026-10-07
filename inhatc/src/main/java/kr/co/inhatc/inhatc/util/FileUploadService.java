@@ -76,7 +76,17 @@ public class FileUploadService {
      * @throws IOException 파일 저장 실패 시
      */
     public static Path uploadProfileImage(MultipartFile file, String email, String uploadDir) throws IOException {
-        // 파일 보안 검증
+        return uploadFixedNameImage(file, email, uploadDir, "profile");
+    }
+
+    /**
+     * 프로필 배너 이미지 업로드
+     */
+    public static Path uploadBannerImage(MultipartFile file, String email, String uploadDir) throws IOException {
+        return uploadFixedNameImage(file, email, uploadDir, "banner");
+    }
+
+    private static Path uploadFixedNameImage(MultipartFile file, String email, String uploadDir, String baseName) throws IOException {
         try {
             FileUploadValidator.validateFile(file);
         } catch (IllegalArgumentException e) {
@@ -84,23 +94,20 @@ public class FileUploadService {
             throw new IOException(String.format(AppConstants.ErrorMessage.FILE_VALIDATION_FAILED, e.getMessage()), e);
         }
 
-        // 사용자 디렉토리 생성
         Path userDir = Paths.get(uploadDir, email);
         if (!Files.exists(userDir)) {
             Files.createDirectories(userDir);
         }
 
-        // 안전한 파일명 생성 (프로필은 고정 파일명 사용)
         String originalFilename = file.getOriginalFilename();
         String extension = FileUploadValidator.getFileExtension(originalFilename);
         if (extension == null) {
-            extension = "png"; // 기본값
+            extension = "png";
         }
 
-        String filename = "profile." + extension;
+        String filename = baseName + "." + extension;
         Path filePath = userDir.resolve(filename);
         Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
         return filePath;
     }
 

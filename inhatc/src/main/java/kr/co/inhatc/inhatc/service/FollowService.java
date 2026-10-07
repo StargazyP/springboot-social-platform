@@ -1,6 +1,8 @@
 package kr.co.inhatc.inhatc.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -84,6 +86,36 @@ public class FollowService {
         }
 
         return followRepository.existsByFollowerAndFollowing(follower, following);
+    }
+
+    /**
+     * 여러 사용자에 대한 팔로우 여부 일괄 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Boolean> getFollowingStatusBatch(String followerEmail, List<String> targetEmails) {
+        Map<String, Boolean> result = new HashMap<>();
+        if (followerEmail == null || targetEmails == null || targetEmails.isEmpty()) {
+            return result;
+        }
+
+        List<String> distinctEmails = targetEmails.stream()
+                .filter(email -> email != null && !email.equals(followerEmail))
+                .distinct()
+                .collect(Collectors.toList());
+
+        distinctEmails.forEach(email -> result.put(email, false));
+        if (distinctEmails.isEmpty()) {
+            return result;
+        }
+
+        MemberEntity follower = memberRepository.findByMemberEmail(followerEmail).orElse(null);
+        if (follower == null) {
+            return result;
+        }
+
+        List<String> followedEmails = followRepository.findFollowingEmails(follower, distinctEmails);
+        followedEmails.forEach(email -> result.put(email, true));
+        return result;
     }
 
     /**

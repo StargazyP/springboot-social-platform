@@ -98,7 +98,7 @@ class PostControllerTest {
     void uploadImage_Success() throws Exception {
         // given
         when(postService.imgupload(any(), anyString())).thenReturn("/posts/test/image.jpg");
-        doNothing().when(postService).savePost(anyString(), anyString(), anyString());
+        when(postService.savePost(anyString(), anyString(), anyString())).thenReturn(testPostDTO);
 
         // when & then
         mockMvc.perform(multipart("/api/posts")

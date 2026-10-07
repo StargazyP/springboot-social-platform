@@ -1,434 +1,75 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
   <head>
+    <script>(function(){try{var t=localStorage.getItem('sns-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('sns-lang')||'ko';document.documentElement.setAttribute('lang',l==='ja'?'ja':'ko');}catch(e){}})();</script>
+    <script src="/js/theme-init.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>메시지</title>
-    <link rel="stylesheet" href="/css/sidebar.css" />
     <script th:src="@{/webjars/sockjs-client/sockjs.min.js}"></script>
-    <script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        background-color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #0f1419;
-        line-height: 1.5;
-        min-height: 100vh;
-        padding: 0;
-        margin: 0;
-      }
-
-      .wrapper {
-        display: flex;
-        max-width: 1200px;
-        margin: 0 auto;
-        background-color: #ffffff;
-        min-height: 100vh;
-      }
-
-      .chat-header {
-        position: sticky;
-        top: 0;
-        background-color: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid #eff3f4;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-shrink: 0;
-        z-index: 100;
-        min-height: 64px;
-      }
-
-      .chat-header h2 {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f1419;
-        margin: 0;
-      }
-
-      .back-button {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        border: none;
-        background: transparent;
-        font-size: 20px;
-        color: #0f1419;
-      }
-
-      .back-button:hover {
-        background-color: #f7f9f9;
-      }
-
-      /* 목록 모드 컨테이너 */
-      #listMode {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-        height: calc(100vh - 0px);
-      }
-
-      /* 대화 상대 목록 스타일 */
-      .conversation-list {
-        flex: 1;
-        overflow-y: auto;
-        background-color: #ffffff;
-        min-height: 0;
-        max-height: 100%;
-      }
-
-      .conversation-item {
-        padding: 16px;
-        border-bottom: 1px solid #eff3f4;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: flex;
-        gap: 12px;
-        align-items: center;
-      }
-
-      .conversation-item:hover {
-        background-color: #f7f9f9;
-      }
-
-      .conversation-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background-color: #1d9bf0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 18px;
-        flex-shrink: 0;
-      }
-
-      .conversation-content {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .conversation-name {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f1419;
-        margin-bottom: 4px;
-      }
-
-      .conversation-preview {
-        font-size: 15px;
-        color: #536471;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .conversation-time {
-        font-size: 13px;
-        color: #536471;
-        margin-left: auto;
-        flex-shrink: 0;
-      }
-
-      .empty-conversations {
-        text-align: center;
-        padding: 60px 20px;
-        color: #536471;
-        font-size: 15px;
-      }
-
-      /* 채팅 모드 컨테이너 */
-      #chatMode {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-        height: calc(100vh - 0px);
-      }
-
-      .chat-messages {
-        flex: 1;
-        padding: 16px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        background-color: #ffffff;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-height: 0; /* flex 컨테이너에서 스크롤이 작동하도록 */
-        max-height: 100%; /* 부모 컨테이너의 높이를 넘지 않도록 */
-      }
-
-      /* 스크롤바 스타일 개선 (WebKit 브라우저) */
-      .chat-messages::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      .chat-messages::-webkit-scrollbar-track {
-        background: #f7f9f9;
-        border-radius: 4px;
-      }
-
-      .chat-messages::-webkit-scrollbar-thumb {
-        background: #536471;
-        border-radius: 4px;
-      }
-
-      .chat-messages::-webkit-scrollbar-thumb:hover {
-        background: #0f1419;
-      }
-
-      /* Firefox 스크롤바 스타일 */
-      .chat-messages {
-        scrollbar-width: thin;
-        scrollbar-color: #536471 #f7f9f9;
-      }
-
-      .message {
-        display: flex;
-        flex-direction: column;
-        max-width: 75%;
-        word-wrap: break-word;
-      }
-
-      .message.sent {
-        align-self: flex-end;
-        align-items: flex-end;
-      }
-
-      .message.received {
-        align-self: flex-start;
-        align-items: flex-start;
-      }
-
-      .message-content {
-        padding: 12px 16px;
-        border-radius: 20px;
-        font-size: 15px;
-        line-height: 1.4;
-      }
-
-      .message.sent .message-content {
-        background-color: #1d9bf0;
-        color: #ffffff;
-        border-bottom-right-radius: 4px;
-      }
-
-      .message.received .message-content {
-        background-color: #f7f9f9;
-        color: #0f1419;
-        border-bottom-left-radius: 4px;
-      }
-
-      .message-time {
-        font-size: 12px;
-        color: #536471;
-        margin-top: 4px;
-        padding: 0 4px;
-      }
-
-      .chat-input-container {
-        padding: 12px 16px;
-        border-top: 1px solid #eff3f4;
-        background-color: #ffffff;
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-shrink: 0; /* 높이가 줄어들지 않도록 */
-      }
-
-      #messageInput {
-        flex: 1;
-        padding: 12px;
-        border: 1px solid #eff3f4;
-        border-radius: 24px;
-        font-size: 15px;
-        outline: none;
-        font-family: inherit;
-        resize: none;
-        min-height: 44px;
-        max-height: 120px;
-      }
-
-      #messageInput:focus {
-        border-color: #1d9bf0;
-      }
-
-      #sendButton {
-        padding: 10px 20px;
-        background-color: #1d9bf0;
-        color: #ffffff;
-        border: none;
-        border-radius: 24px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-
-      #sendButton:hover {
-        background-color: #1a8cd8;
-      }
-
-      #sendButton:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      /* 이미지 업로드 관련 스타일 */
-      .image-upload-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .image-upload-button {
-        padding: 8px 12px;
-        background-color: #f7f9f9;
-        color: #0f1419;
-        border: 1px solid #eff3f4;
-        border-radius: 20px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .image-upload-button:hover {
-        background-color: #eff3f4;
-      }
-
-      .image-preview-container {
-        position: relative;
-        display: inline-block;
-        margin-top: 8px;
-      }
-
-      .image-preview {
-        max-width: 200px;
-        max-height: 200px;
-        border-radius: 12px;
-        border: 1px solid #eff3f4;
-      }
-
-      .image-preview-remove {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 24px;
-        height: 24px;
-        background-color: #0f1419;
-        color: #ffffff;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s;
-      }
-
-      .image-preview-remove:hover {
-        background-color: #536471;
-      }
-
-      .message-image {
-        max-width: 300px;
-        max-height: 300px;
-        border-radius: 12px;
-        margin-top: 8px;
-        cursor: pointer;
-      }
-
-      .message-image:hover {
-        opacity: 0.9;
-      }
-
-      .loading {
-        text-align: center;
-        padding: 20px;
-        color: #536471;
-        font-size: 15px;
-      }
-
-      /* 반응형 디자인 */
-      @media (max-width: 768px) {
-        .wrapper {
-          max-width: 100%;
-          border-left: none;
-          border-right: none;
-        }
-      }
-    </style>
+    <script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>    <link rel="stylesheet" href="/css/sidebar.css" />
+    <link rel="stylesheet" href="/css/social-theme.css" />
+    <link rel="stylesheet" href="/css/social-pages.css" />
+    <link rel="stylesheet" href="/css/templates-theme.css" />
+    <link rel="stylesheet" href="/css/i18n.css" />
+    <script src="/js/i18n.js" defer></script>
+    <script src="/js/social-ui.js" defer></script>
   </head>
-  <body>
+  <body class="feed-body">
     <div class="wrapper">
       <!-- 메인 컨텐츠 영역 -->
       <div class="main-content">
         <!-- REST/레이아웃 개선: sidebar를 메인 컨테이너 안에 두고 sticky로 따라오게 함 -->
         <div class="sidebar">
           <a href="/main" class="sidebar-item">
-            <img src="/images/home.png" alt="home" />
-            <span>Home</span>
+            <img src="/images/home.svg" alt="home" />
+            <span data-i18n="nav.home">Home</span>
           </a>
           <a href="/member/mypage" class="sidebar-item">
-            <img src="/images/user.png" alt="User" />
-            <span>User</span>
+            <img src="/images/user.svg" alt="User" />
+            <span data-i18n="nav.user">User</span>
           </a>
           <a href="/chat/message" class="sidebar-item active">
             <img src="/images/message.svg" alt="Message" />
-            <span>Message</span>
+            <span data-i18n="nav.message">Message</span>
           </a>
           <div class="sidebar-item" onclick="location.href='/posts/notifications/page';" style="cursor: pointer;">
-            <img src="/images/alram.png" alt="Alarm" />
-            <span>Alarm</span>
+            <img src="/images/bell.svg" alt="Alarm" />
+            <span data-i18n="nav.alarm">Alarm</span>
           </div>
           <div class="sidebar-item" onclick="document.getElementById('logout').submit();" style="cursor: pointer;">
-            <img src="/images/logout.png" alt="Logout" />
-            <span>Logout</span>
+            <img src="/images/logout.svg" alt="Logout" />
+            <span data-i18n="nav.logout">Logout</span>
           </div>
+          <div class="sidebar-theme">
+            <label class="theme-switch" data-i18n-attr="title" data-i18n="nav.themeDark" title="다크 모드">
+              <input type="checkbox" data-theme-toggle aria-label="다크 모드">
+              <span class="theme-switch-slider"></span>
+              <span data-i18n="nav.theme">테마</span>
+            </label>
+          </div>
+
           <form id="logout" action="/api/members/logout" method="post"></form>
         </div>
 
       <!-- 목록 모드 -->
       <div id="listMode" th:if="${isChatMode == null or isChatMode == false}">
         <div class="chat-header">
-          <h2>메시지</h2>
+          <h2 data-i18n="msg.title">메시지</h2>
         </div>
         <!-- 목록 모드용 디버깅 데이터 -->
         <div id="listModeData" 
              th:data-sender-email="${senderEmail}"
              style="display: none;"></div>
         <div class="conversation-list" id="conversationList">
-          <div class="loading">대화 상대를 불러오는 중...</div>
+          <div class="loading" data-i18n="msg.conversationsLoading">대화 상대를 불러오는 중...</div>
         </div>
       </div>
 
       <!-- 채팅 모드 -->
       <div id="chatMode" th:if="${isChatMode != null and isChatMode == true}">
         <div class="chat-header">
-          <button class="back-button" onclick="goToListMode()" title="목록으로">←</button>
+          <button class="back-button" onclick="goToListMode()" data-i18n-attr="title" data-i18n="msg.backToList" title="목록으로">←</button>
           <h2 id="receiverName" th:text="${receiverName != null ? receiverName : receiverEmail}">메시지</h2>
           <!-- 디버깅용: Thymeleaf 변수를 data 속성으로 전달 -->
           <div id="debugData" 
@@ -438,23 +79,24 @@
         </div>
 
         <div class="chat-messages" id="chatMessages">
-          <div class="loading">메시지를 불러오는 중...</div>
+          <div class="loading" data-i18n="msg.loading">메시지를 불러오는 중...</div>
         </div>
 
         <div class="chat-input-container">
           <div class="image-upload-container" style="width: 100%;">
             <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
               <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
-              <button class="image-upload-button" onclick="document.getElementById('imageInput').click()">
+              <button class="image-upload-button" onclick="document.getElementById('imageInput').click()" data-i18n="msg.imageUpload">
                  이미지 업로드
               </button>
               <textarea
                 id="messageInput"
+                data-i18n-placeholder="msg.placeholder"
                 placeholder="메시지를 입력하세요..."
                 rows="1"
                 style="flex: 1;"
               ></textarea>
-              <button id="sendButton" onclick="sendMessage()">전송</button>
+              <button id="sendButton" onclick="sendMessage()" data-i18n="msg.send">전송</button>
             </div>
             <div id="imagePreviewContainer" style="display: none;"></div>
           </div>
