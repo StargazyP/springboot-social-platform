@@ -6,7 +6,7 @@
 
 - 중앙 게이트: `/home/jangdonggun/포트폴리오/portfolio/webhook-server.js`
 - 액션 호출 주소: `http://<SSH_HOST>:3000/webhook`
-- `spring_sns_git` 리포 push 이벤트를 중앙 게이트가 식별해 `portfolio/docker-compose.yml`의 `spring` 서비스만 재배포합니다.
+- `spring_sns_git` 리포 push 이벤트를 중앙 게이트가 식별해 `portfolio/docker-compose.yml`의 `spring-sns` 서비스만 재배포합니다.
 
 ## 필요한 GitHub Secrets
 

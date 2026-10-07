@@ -173,8 +173,8 @@ jobs:
             git checkout "$BRANCH"
             git pull --ff-only origin "$BRANCH"
             cd "$PORTFOLIO"
-            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" build spring
-            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" up -d spring
-            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" ps spring
-            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" logs --tail=80 spring
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" build spring-sns
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" up -d spring-sns
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" ps spring-sns
+            docker compose --project-directory "$PORTFOLIO" -f "$PORTFOLIO/docker-compose.yml" logs --tail=80 spring-sns
 
